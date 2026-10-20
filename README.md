@@ -20,7 +20,7 @@ installation step, no virtualenv required. The project uses only the
 Python standard library.
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/Shivani767/360Covered_AI_Challenge_Candidate.git
 cd 360Covered_AI_Challenge_Candidate
 
 # 1. Run the whole evaluation suite (no API key needed)
@@ -265,7 +265,21 @@ template was written by a model.
 * **Out of scope**, per the brief: no web app, database, VIN decoder,
   checkout, authentication or deployment.
 
-## 11. AI tools used
+## 11. Delivery
+
+| | |
+| --- | --- |
+| Repository | `https://github.com/Shivani767/360Covered_AI_Challenge_Candidate` (private) |
+| Collaborator | `darkside720` (push permission, invitation pending acceptance) |
+| Branch | `master` |
+| Runtime dependencies | none (Python standard library only) |
+| Python version | 3.9 or newer |
+
+To accept the invitation, `darkside720` should open
+<https://github.com/Shivani767/360Covered_AI_Challenge_Candidate/invitations>
+and accept, then clone with their own GitHub credentials.
+
+## 12. AI tools used
 
 An AI coding assistant (Cline, running on an LLM) was used to write and
 refactor this package, to draft the test suite, and to produce the

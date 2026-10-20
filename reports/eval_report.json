@@ -1,7 +1,7 @@
 {
   "mode": "OFFLINE_DETERMINISTIC - NOT AN LLM",
-  "total": 69,
-  "passed": 69,
+  "total": 76,
+  "passed": 76,
   "failed": 0,
   "errors": 0,
   "cases": [
@@ -18,7 +18,7 @@
     {
       "name": "test_adversarial.AdversarialQuestionTest.test_injections_do_not_leak_the_prompt",
       "ok": true,
-      "duration_s": 0.0009
+      "duration_s": 0.0008
     },
     {
       "name": "test_adversarial.AdversarialQuestionTest.test_injections_do_not_leak_unauthorized_plan_details",
@@ -138,7 +138,7 @@
     {
       "name": "test_guardrails.GuardrailTest.test_conditional_benefit_allowed",
       "ok": true,
-      "duration_s": 0.0001
+      "duration_s": 0.0
     },
     {
       "name": "test_guardrails.GuardrailTest.test_correct_price_and_deductible_allowed",
@@ -171,6 +171,11 @@
       "duration_s": 0.0
     },
     {
+      "name": "test_guardrails.GuardrailTest.test_shorter_plan_name_inside_longer_is_not_a_violation",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
       "name": "test_guardrails.GuardrailTest.test_unauthorized_plan_id_rejected",
       "ok": true,
       "duration_s": 0.0
@@ -198,7 +203,7 @@
     {
       "name": "test_live_provider.LiveProviderTest.test_live_call_returns_model_answer",
       "ok": true,
-      "duration_s": 0.0087
+      "duration_s": 0.0077
     },
     {
       "name": "test_live_provider.LiveProviderTest.test_live_request_carries_the_fact_pack",
@@ -211,34 +216,39 @@
       "duration_s": 0.0
     },
     {
+      "name": "test_live_provider.LiveProviderTest.test_prompt_version_is_recorded_in_the_trace",
+      "ok": true,
+      "duration_s": 0.0004
+    },
+    {
       "name": "test_live_provider.LiveProviderTest.test_provider_error_is_surfaced_not_swallowed",
       "ok": true,
-      "duration_s": 0.5033
+      "duration_s": 0.5037
     },
     {
       "name": "test_live_provider.LiveProviderTest.test_spend_cap_stops_further_calls",
       "ok": true,
-      "duration_s": 0.0005
+      "duration_s": 0.0017
     },
     {
       "name": "test_live_provider.LiveProviderTest.test_unsafe_model_answer_is_caught_and_replaced",
       "ok": true,
-      "duration_s": 0.0009
+      "duration_s": 0.002
     },
     {
       "name": "test_multiturn.MultiTurnTest.test_conversation_does_not_drift_after_state_change",
       "ok": true,
-      "duration_s": 0.0016
+      "duration_s": 0.0007
     },
     {
       "name": "test_multiturn.MultiTurnTest.test_history_is_bounded",
       "ok": true,
-      "duration_s": 0.01
+      "duration_s": 0.0091
     },
     {
       "name": "test_multiturn.MultiTurnTest.test_newly_visible_plan_can_be_discussed",
       "ok": true,
-      "duration_s": 0.0005
+      "duration_s": 0.0004
     },
     {
       "name": "test_multiturn.MultiTurnTest.test_option_purchase_is_reflected",
@@ -253,12 +263,12 @@
     {
       "name": "test_multiturn.MultiTurnTest.test_plan_is_not_sticky_after_visibility_change",
       "ok": true,
-      "duration_s": 0.0006
+      "duration_s": 0.0005
     },
     {
       "name": "test_multiturn.MultiTurnTest.test_reset_clears_referent_memory",
       "ok": true,
-      "duration_s": 0.0006
+      "duration_s": 0.0005
     },
     {
       "name": "test_multiturn.MultiTurnTest.test_selection_change_is_reflected_on_next_turn",
@@ -268,7 +278,7 @@
     {
       "name": "test_scenarios.ScenarioTest.test_all_scenarios_meet_expectation",
       "ok": true,
-      "duration_s": 0.0045
+      "duration_s": 0.0021
     },
     {
       "name": "test_scenarios.ScenarioTraceTest.test_offline_mode_is_labelled_not_llm",
@@ -283,12 +293,17 @@
     {
       "name": "test_smoke.Smoke.test_returns_text",
       "ok": true,
-      "duration_s": 0.0008
+      "duration_s": 0.0003
     },
     {
       "name": "test_state.ReferentResolutionTest.test_explicit_plan_name_wins",
       "ok": true,
-      "duration_s": 0.0001
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.ReferentResolutionTest.test_longer_plan_name_wins",
+      "ok": true,
+      "duration_s": 0.0
     },
     {
       "name": "test_state.ReferentResolutionTest.test_named_but_unavailable_plan_is_not_resolved",
@@ -316,6 +331,11 @@
       "duration_s": 0.0
     },
     {
+      "name": "test_state.ReferentResolutionTest.test_shorter_plan_name_still_matches",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
       "name": "test_state.StateNormalizationTest.test_allowed_is_intersection_not_union",
       "ok": true,
       "duration_s": 0.0
@@ -338,7 +358,7 @@
     {
       "name": "test_state.StateNormalizationTest.test_missing_visible_ids_does_not_widen_to_whole_catalog",
       "ok": true,
-      "duration_s": 0.0001
+      "duration_s": 0.0
     },
     {
       "name": "test_state.StateNormalizationTest.test_unknown_option_is_dropped",
@@ -349,6 +369,21 @@
       "name": "test_state.StateNormalizationTest.test_unknown_plan_ids_are_dropped_with_warning",
       "ok": true,
       "duration_s": 0.0
+    },
+    {
+      "name": "test_sweep.SweepTest.test_every_answer_is_non_empty",
+      "ok": true,
+      "duration_s": 0.0131
+    },
+    {
+      "name": "test_sweep.SweepTest.test_every_answer_mentions_no_blocked_plan_price",
+      "ok": true,
+      "duration_s": 0.0193
+    },
+    {
+      "name": "test_sweep.SweepTest.test_no_safety_property_is_violated_anywhere",
+      "ok": true,
+      "duration_s": 0.0234
     }
   ],
   "conversations": [

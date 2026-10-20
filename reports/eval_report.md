@@ -1,8 +1,8 @@
 # AI Coverage Assistant - Evaluation Report
 
 - Mode: **OFFLINE_DETERMINISTIC - NOT AN LLM**
-- Cases run: **69**
-- Passed: **69**
+- Cases run: **76**
+- Passed: **76**
 - Failed: **0**
 - Errors: **0**
 
@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | `adversarial.AdversarialQuestionTest.answer_always_returns_a_non_empty_string` | PASS | 0.0016 |
 | `adversarial.AdversarialQuestionTest.everything_request_is_refused_safely` | PASS | 0.0002 |
-| `adversarial.AdversarialQuestionTest.injections_do_not_leak_the_prompt` | PASS | 0.0009 |
+| `adversarial.AdversarialQuestionTest.injections_do_not_leak_the_prompt` | PASS | 0.0008 |
 | `adversarial.AdversarialQuestionTest.injections_do_not_leak_unauthorized_plan_details` | PASS | 0.0008 |
 | `adversarial.AdversarialQuestionTest.injections_do_not_trigger_universal_promise` | PASS | 0.0009 |
 | `adversarial.MalformedStateTest.empty_state_does_not_crash` | PASS | 0.0001 |
@@ -36,49 +36,56 @@
 | `guardrails.GuardrailTest.authorized_scope_lists_all_catalog_ids` | PASS | 0.0 |
 | `guardrails.GuardrailTest.bumper_to_bumper_claim_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.claim_approval_rejected` | PASS | 0.0 |
-| `guardrails.GuardrailTest.conditional_benefit_allowed` | PASS | 0.0001 |
+| `guardrails.GuardrailTest.conditional_benefit_allowed` | PASS | 0.0 |
 | `guardrails.GuardrailTest.correct_price_and_deductible_allowed` | PASS | 0.0 |
 | `guardrails.GuardrailTest.empty_answer_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.fabricated_deductible_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.fabricated_price_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.guaranteed_rental_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.purchased_option_coverage_allowed` | PASS | 0.0 |
+| `guardrails.GuardrailTest.shorter_plan_name_inside_longer_is_not_a_violation` | PASS | 0.0 |
 | `guardrails.GuardrailTest.unauthorized_plan_id_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.unauthorized_plan_name_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.universal_promise_is_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.unpurchased_option_coverage_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.unpurchased_option_with_hedge_allowed` | PASS | 0.0 |
-| `live_provider.LiveProviderTest.live_call_returns_model_answer` | PASS | 0.0087 |
+| `live_provider.LiveProviderTest.live_call_returns_model_answer` | PASS | 0.0077 |
 | `live_provider.LiveProviderTest.live_request_carries_the_fact_pack` | PASS | 0.0005 |
 | `live_provider.LiveProviderTest.missing_api_key_raises_clear_error` | PASS | 0.0 |
-| `live_provider.LiveProviderTest.provider_error_is_surfaced_not_swallowed` | PASS | 0.5033 |
-| `live_provider.LiveProviderTest.spend_cap_stops_further_calls` | PASS | 0.0005 |
-| `live_provider.LiveProviderTest.unsafe_model_answer_is_caught_and_replaced` | PASS | 0.0009 |
-| `multiturn.MultiTurnTest.conversation_does_not_drift_after_state_change` | PASS | 0.0016 |
-| `multiturn.MultiTurnTest.history_is_bounded` | PASS | 0.01 |
-| `multiturn.MultiTurnTest.newly_visible_plan_can_be_discussed` | PASS | 0.0005 |
+| `live_provider.LiveProviderTest.prompt_version_is_recorded_in_the_trace` | PASS | 0.0004 |
+| `live_provider.LiveProviderTest.provider_error_is_surfaced_not_swallowed` | PASS | 0.5037 |
+| `live_provider.LiveProviderTest.spend_cap_stops_further_calls` | PASS | 0.0017 |
+| `live_provider.LiveProviderTest.unsafe_model_answer_is_caught_and_replaced` | PASS | 0.002 |
+| `multiturn.MultiTurnTest.conversation_does_not_drift_after_state_change` | PASS | 0.0007 |
+| `multiturn.MultiTurnTest.history_is_bounded` | PASS | 0.0091 |
+| `multiturn.MultiTurnTest.newly_visible_plan_can_be_discussed` | PASS | 0.0004 |
 | `multiturn.MultiTurnTest.option_purchase_is_reflected` | PASS | 0.0006 |
 | `multiturn.MultiTurnTest.option_removal_is_reflected` | PASS | 0.0005 |
-| `multiturn.MultiTurnTest.plan_is_not_sticky_after_visibility_change` | PASS | 0.0006 |
-| `multiturn.MultiTurnTest.reset_clears_referent_memory` | PASS | 0.0006 |
+| `multiturn.MultiTurnTest.plan_is_not_sticky_after_visibility_change` | PASS | 0.0005 |
+| `multiturn.MultiTurnTest.reset_clears_referent_memory` | PASS | 0.0005 |
 | `multiturn.MultiTurnTest.selection_change_is_reflected_on_next_turn` | PASS | 0.0005 |
-| `scenarios.ScenarioTest.all_scenarios_meet_expectation` | PASS | 0.0045 |
+| `scenarios.ScenarioTest.all_scenarios_meet_expectation` | PASS | 0.0021 |
 | `scenarios.ScenarioTraceTest.offline_mode_is_labelled_not_llm` | PASS | 0.0003 |
 | `scenarios.ScenarioTraceTest.trace_records_authorization_scope` | PASS | 0.0003 |
-| `smoke.Smoke.returns_text` | PASS | 0.0008 |
-| `state.ReferentResolutionTest.explicit_plan_name_wins` | PASS | 0.0001 |
+| `smoke.Smoke.returns_text` | PASS | 0.0003 |
+| `state.ReferentResolutionTest.explicit_plan_name_wins` | PASS | 0.0 |
+| `state.ReferentResolutionTest.longer_plan_name_wins` | PASS | 0.0 |
 | `state.ReferentResolutionTest.named_but_unavailable_plan_is_not_resolved` | PASS | 0.0 |
 | `state.ReferentResolutionTest.only_allowed_plan_is_used_as_last_resort` | PASS | 0.0 |
 | `state.ReferentResolutionTest.option_id_matching` | PASS | 0.0 |
 | `state.ReferentResolutionTest.recent_used_when_no_selection` | PASS | 0.0 |
 | `state.ReferentResolutionTest.selection_wins_over_stale_recent` | PASS | 0.0 |
+| `state.ReferentResolutionTest.shorter_plan_name_still_matches` | PASS | 0.0 |
 | `state.StateNormalizationTest.allowed_is_intersection_not_union` | PASS | 0.0 |
 | `state.StateNormalizationTest.empty_eligible_list_is_handled` | PASS | 0.0 |
 | `state.StateNormalizationTest.malformed_state_does_not_raise` | PASS | 0.0 |
 | `state.StateNormalizationTest.missing_eligible_ids_does_not_widen` | PASS | 0.0 |
-| `state.StateNormalizationTest.missing_visible_ids_does_not_widen_to_whole_catalog` | PASS | 0.0001 |
+| `state.StateNormalizationTest.missing_visible_ids_does_not_widen_to_whole_catalog` | PASS | 0.0 |
 | `state.StateNormalizationTest.unknown_option_is_dropped` | PASS | 0.0 |
 | `state.StateNormalizationTest.unknown_plan_ids_are_dropped_with_warning` | PASS | 0.0 |
+| `sweep.SweepTest.every_answer_is_non_empty` | PASS | 0.0131 |
+| `sweep.SweepTest.every_answer_mentions_no_blocked_plan_price` | PASS | 0.0193 |
+| `sweep.SweepTest.no_safety_property_is_violated_anywhere` | PASS | 0.0234 |
 
 ## Example conversations
 
