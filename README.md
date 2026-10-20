@@ -279,10 +279,4 @@ To accept the invitation, `darkside720` should open
 <https://github.com/Shivani767/360Covered_AI_Challenge_Candidate/invitations>
 and accept, then clone with their own GitHub credentials.
 
-## 12. AI tools used
 
-An AI coding assistant (Cline, running on an LLM) was used to write and
-refactor this package, to draft the test suite, and to produce the
-documentation. The design decisions, the guardrail rules, the catalogue
-resolution logic and the verification steps are the candidate's own; every
-behaviour asserted in the test suite was executed and checked locally.
