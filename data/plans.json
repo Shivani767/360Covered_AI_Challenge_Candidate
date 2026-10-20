@@ -1,0 +1,156 @@
+{
+  "disclaimer": "FICTIONAL products and policies for an engineering assessment only. No insurer or real service contract is represented.",
+  "plans": [
+    {
+      "id": "P-BASE",
+      "name": "CoreDrive",
+      "tier": "powertrain",
+      "monthly_price": 89,
+      "deductible": 200,
+      "components": [
+        "engine internal lubricated parts",
+        "transmission internal lubricated parts",
+        "drive axle internal parts"
+      ],
+      "exclusions": [
+        "pre-existing failures",
+        "normal maintenance items",
+        "damage caused by continued operation after malfunction"
+      ],
+      "options_available": [
+        "electronics_plus",
+        "exhaust_plus"
+      ]
+    },
+    {
+      "id": "P-PLUS",
+      "name": "CoreDrive Plus",
+      "tier": "stated",
+      "monthly_price": 139,
+      "deductible": 100,
+      "inherits": [
+        "P-BASE"
+      ],
+      "components": [
+        "factory air-conditioning compressor",
+        "alternator",
+        "starter motor",
+        "factory-installed radiator",
+        "front suspension control arms"
+      ],
+      "exclusions": [
+        "pre-existing failures",
+        "normal maintenance items",
+        "damage caused by continued operation after malfunction"
+      ],
+      "options_available": [
+        "electronics_plus",
+        "exhaust_plus"
+      ]
+    },
+    {
+      "id": "P-WRAP",
+      "name": "DriveWrap",
+      "tier": "wrap",
+      "monthly_price": 109,
+      "deductible": 100,
+      "components": [
+        "factory air-conditioning compressor",
+        "alternator",
+        "starter motor",
+        "factory-installed radiator",
+        "front suspension control arms"
+      ],
+      "explicitly_excludes": [
+        "engine internal lubricated parts",
+        "transmission internal lubricated parts",
+        "drive axle internal parts"
+      ],
+      "exclusions": [
+        "pre-existing failures",
+        "normal maintenance items",
+        "damage caused by continued operation after malfunction"
+      ],
+      "requires": "active outside powertrain warranty",
+      "options_available": [
+        "electronics_plus",
+        "exhaust_plus"
+      ]
+    },
+    {
+      "id": "P-EXCL",
+      "name": "TotalDrive Select",
+      "tier": "exclusionary_style",
+      "monthly_price": 189,
+      "deductible": 100,
+      "components": "covered unless explicitly excluded, subject to conditions and claim review",
+      "exclusions": [
+        "pre-existing failures",
+        "brake pads and brake rotors",
+        "normal maintenance items",
+        "collision damage",
+        "damage caused by continued operation after malfunction",
+        "unauthorized repairs"
+      ],
+      "options_available": [
+        "electronics_plus",
+        "exhaust_plus"
+      ]
+    }
+  ],
+  "options": {
+    "electronics_plus": {
+      "covers": [
+        "factory-installed navigation screen",
+        "factory-installed rear parking camera"
+      ],
+      "excludes": [
+        "software updates",
+        "pixel damage"
+      ]
+    },
+    "exhaust_plus": {
+      "covers": [
+        "factory-installed catalytic converter"
+      ],
+      "excludes": [
+        "aftermarket exhaust modifications"
+      ]
+    }
+  },
+  "benefits": {
+    "rental": {
+      "daily_cap_usd": 30,
+      "max_days": 4,
+      "requires": [
+        "covered breakdown",
+        "repair over 4 labor hours or vehicle out of service overnight"
+      ],
+      "does_not_cover": [
+        "tax",
+        "insurance fees",
+        "parts delay extension"
+      ]
+    },
+    "trip_interruption": {
+      "daily_cap_usd": 90,
+      "max_days": 3,
+      "min_distance_from_home_miles_exclusive": 100,
+      "requires": [
+        "covered breakdown",
+        "overnight repair stay"
+      ]
+    }
+  },
+  "claims_conditions": [
+    "repairs normally require prior authorization",
+    "maintenance documentation may be requested",
+    "final claims decision is made by the administrator"
+  ],
+  "comparison_order": [
+    "P-BASE",
+    "P-PLUS",
+    "P-EXCL"
+  ],
+  "notes": "Do not infer an eligibility rule from pricing, tier or age. Eligibility comes only from scenario state."
+}

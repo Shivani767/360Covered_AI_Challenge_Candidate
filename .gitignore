@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Secrets - never commit a real key
+.env
+.env.local
+*.key
+*.pem
+
+# OS
+.DS_Store
+
+# Generated reports are committed on purpose (they are the reviewer's
+# evidence), but local scratch output is not.
+*.tmp

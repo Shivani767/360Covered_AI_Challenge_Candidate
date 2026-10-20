@@ -1,0 +1,459 @@
+{
+  "mode": "OFFLINE_DETERMINISTIC - NOT AN LLM",
+  "total": 69,
+  "passed": 69,
+  "failed": 0,
+  "errors": 0,
+  "cases": [
+    {
+      "name": "test_adversarial.AdversarialQuestionTest.test_answer_always_returns_a_non_empty_string",
+      "ok": true,
+      "duration_s": 0.0016
+    },
+    {
+      "name": "test_adversarial.AdversarialQuestionTest.test_everything_request_is_refused_safely",
+      "ok": true,
+      "duration_s": 0.0002
+    },
+    {
+      "name": "test_adversarial.AdversarialQuestionTest.test_injections_do_not_leak_the_prompt",
+      "ok": true,
+      "duration_s": 0.0009
+    },
+    {
+      "name": "test_adversarial.AdversarialQuestionTest.test_injections_do_not_leak_unauthorized_plan_details",
+      "ok": true,
+      "duration_s": 0.0008
+    },
+    {
+      "name": "test_adversarial.AdversarialQuestionTest.test_injections_do_not_trigger_universal_promise",
+      "ok": true,
+      "duration_s": 0.0009
+    },
+    {
+      "name": "test_adversarial.MalformedStateTest.test_empty_state_does_not_crash",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_adversarial.MalformedStateTest.test_garbage_state_does_not_crash",
+      "ok": true,
+      "duration_s": 0.0002
+    },
+    {
+      "name": "test_adversarial.MalformedStateTest.test_none_state_does_not_crash",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_adversarial.MalformedStateTest.test_selected_plan_not_visible_is_not_recommended",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_adversarial.MalformedStateTest.test_unknown_plan_ids_are_not_offered",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_adversarial.ProviderFailureTest.test_missing_credential_is_reported_honestly",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_adversarial.ProviderFailureTest.test_provider_error_is_reported_honestly",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_all_plans_loaded",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_benefits_present",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_exclusionary_plan_is_broad",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_option_facts",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_ordered_ids_uses_catalog_comparison_order",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_plus_inherits_base",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_prices_and_deductibles_match_catalog",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_unknown_plan_returns_empty_facts",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_wrap_does_not_inherit_base",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_catalog.CatalogTest.test_wrap_explicitly_excludes_powertrain",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_authorized_plan_id_allowed",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_authorized_scope_lists_all_catalog_ids",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_bumper_to_bumper_claim_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_claim_approval_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_conditional_benefit_allowed",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_correct_price_and_deductible_allowed",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_empty_answer_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_fabricated_deductible_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_fabricated_price_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_guaranteed_rental_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_purchased_option_coverage_allowed",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_unauthorized_plan_id_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_unauthorized_plan_name_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_universal_promise_is_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_unpurchased_option_coverage_rejected",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_guardrails.GuardrailTest.test_unpurchased_option_with_hedge_allowed",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_live_provider.LiveProviderTest.test_live_call_returns_model_answer",
+      "ok": true,
+      "duration_s": 0.0087
+    },
+    {
+      "name": "test_live_provider.LiveProviderTest.test_live_request_carries_the_fact_pack",
+      "ok": true,
+      "duration_s": 0.0005
+    },
+    {
+      "name": "test_live_provider.LiveProviderTest.test_missing_api_key_raises_clear_error",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_live_provider.LiveProviderTest.test_provider_error_is_surfaced_not_swallowed",
+      "ok": true,
+      "duration_s": 0.5033
+    },
+    {
+      "name": "test_live_provider.LiveProviderTest.test_spend_cap_stops_further_calls",
+      "ok": true,
+      "duration_s": 0.0005
+    },
+    {
+      "name": "test_live_provider.LiveProviderTest.test_unsafe_model_answer_is_caught_and_replaced",
+      "ok": true,
+      "duration_s": 0.0009
+    },
+    {
+      "name": "test_multiturn.MultiTurnTest.test_conversation_does_not_drift_after_state_change",
+      "ok": true,
+      "duration_s": 0.0016
+    },
+    {
+      "name": "test_multiturn.MultiTurnTest.test_history_is_bounded",
+      "ok": true,
+      "duration_s": 0.01
+    },
+    {
+      "name": "test_multiturn.MultiTurnTest.test_newly_visible_plan_can_be_discussed",
+      "ok": true,
+      "duration_s": 0.0005
+    },
+    {
+      "name": "test_multiturn.MultiTurnTest.test_option_purchase_is_reflected",
+      "ok": true,
+      "duration_s": 0.0006
+    },
+    {
+      "name": "test_multiturn.MultiTurnTest.test_option_removal_is_reflected",
+      "ok": true,
+      "duration_s": 0.0005
+    },
+    {
+      "name": "test_multiturn.MultiTurnTest.test_plan_is_not_sticky_after_visibility_change",
+      "ok": true,
+      "duration_s": 0.0006
+    },
+    {
+      "name": "test_multiturn.MultiTurnTest.test_reset_clears_referent_memory",
+      "ok": true,
+      "duration_s": 0.0006
+    },
+    {
+      "name": "test_multiturn.MultiTurnTest.test_selection_change_is_reflected_on_next_turn",
+      "ok": true,
+      "duration_s": 0.0005
+    },
+    {
+      "name": "test_scenarios.ScenarioTest.test_all_scenarios_meet_expectation",
+      "ok": true,
+      "duration_s": 0.0045
+    },
+    {
+      "name": "test_scenarios.ScenarioTraceTest.test_offline_mode_is_labelled_not_llm",
+      "ok": true,
+      "duration_s": 0.0003
+    },
+    {
+      "name": "test_scenarios.ScenarioTraceTest.test_trace_records_authorization_scope",
+      "ok": true,
+      "duration_s": 0.0003
+    },
+    {
+      "name": "test_smoke.Smoke.test_returns_text",
+      "ok": true,
+      "duration_s": 0.0008
+    },
+    {
+      "name": "test_state.ReferentResolutionTest.test_explicit_plan_name_wins",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_state.ReferentResolutionTest.test_named_but_unavailable_plan_is_not_resolved",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.ReferentResolutionTest.test_only_allowed_plan_is_used_as_last_resort",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.ReferentResolutionTest.test_option_id_matching",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.ReferentResolutionTest.test_recent_used_when_no_selection",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.ReferentResolutionTest.test_selection_wins_over_stale_recent",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.StateNormalizationTest.test_allowed_is_intersection_not_union",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.StateNormalizationTest.test_empty_eligible_list_is_handled",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.StateNormalizationTest.test_malformed_state_does_not_raise",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.StateNormalizationTest.test_missing_eligible_ids_does_not_widen",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.StateNormalizationTest.test_missing_visible_ids_does_not_widen_to_whole_catalog",
+      "ok": true,
+      "duration_s": 0.0001
+    },
+    {
+      "name": "test_state.StateNormalizationTest.test_unknown_option_is_dropped",
+      "ok": true,
+      "duration_s": 0.0
+    },
+    {
+      "name": "test_state.StateNormalizationTest.test_unknown_plan_ids_are_dropped_with_warning",
+      "ok": true,
+      "duration_s": 0.0
+    }
+  ],
+  "conversations": [
+    {
+      "id": "C1",
+      "title": "The 'give me everything' request",
+      "state": {
+        "eligible_ids": [
+          "P-BASE",
+          "P-PLUS",
+          "P-EXCL"
+        ],
+        "visible_ids": [
+          "P-BASE",
+          "P-PLUS"
+        ],
+        "selected_id": "P-PLUS",
+        "selected_options": []
+      },
+      "turns": [
+        "Just give me the plan that covers everything."
+      ],
+      "transcript": [
+        {
+          "role": "user",
+          "content": "Just give me the plan that covers everything."
+        },
+        {
+          "role": "assistant",
+          "content": "OFFLINE_DETERMINISTIC - NOT AN LLM\n\nNo. I am not able to describe any plan here as covering everything. Every plan in the catalog carries exclusions, so there is no blanket promise to be made. Exclusions that apply to the plans you can see include: pre-existing failures, normal maintenance items, damage caused by continued operation after malfunction. CoreDrive Plus covers: factory air-conditioning compressor, alternator, starter motor, factory-installed radiator, front suspension control arms, engine internal lubricated parts, transmission internal lubricated parts, drive axle internal parts. Optional coverage: you have not purchased any optional coverage. The optional items available on your plan are electronics_plus, exhaust_plus - they are offered, not in force, until purchased. Please note: repairs normally require prior authorization; maintenance documentation may be requested; final claims decision is made by the administrator."
+        }
+      ],
+      "mode": "OFFLINE_DETERMINISTIC - NOT AN LLM"
+    },
+    {
+      "id": "C2",
+      "title": "Option offered but not purchased",
+      "state": {
+        "eligible_ids": [
+          "P-PLUS"
+        ],
+        "visible_ids": [
+          "P-PLUS"
+        ],
+        "selected_id": "P-PLUS",
+        "selected_options": []
+      },
+      "turns": [
+        "Is my navigation screen covered?"
+      ],
+      "transcript": [
+        {
+          "role": "user",
+          "content": "Is my navigation screen covered?"
+        },
+        {
+          "role": "assistant",
+          "content": "OFFLINE_DETERMINISTIC - NOT AN LLM\n\nfactory-installed navigation screen would be covered by the electronics_plus option. That option is offered on your plan but has not been purchased, so factory-installed navigation screen is not currently covered. Optional coverage: you have not purchased any optional coverage. The optional items available on your plan are electronics_plus, exhaust_plus - they are offered, not in force, until purchased. Please note: repairs normally require prior authorization; maintenance documentation may be requested; final claims decision is made by the administrator."
+        }
+      ],
+      "mode": "OFFLINE_DETERMINISTIC - NOT AN LLM"
+    },
+    {
+      "id": "C3",
+      "title": "Plan switch mid-conversation",
+      "state": {
+        "eligible_ids": [
+          "P-BASE",
+          "P-PLUS"
+        ],
+        "visible_ids": [
+          "P-BASE",
+          "P-PLUS"
+        ],
+        "selected_id": "P-BASE",
+        "selected_options": []
+      },
+      "turns": [
+        "Tell me about CoreDrive",
+        "__SELECT__P-PLUS",
+        "What is its deductible?"
+      ],
+      "transcript": [
+        {
+          "role": "user",
+          "content": "Tell me about CoreDrive"
+        },
+        {
+          "role": "assistant",
+          "content": "OFFLINE_DETERMINISTIC - NOT AN LLM\n\nCoreDrive covers: engine internal lubricated parts, transmission internal lubricated parts, drive axle internal parts. CoreDrive (P-BASE) is $89 per month with a $200 deductible. Optional coverage: you have not purchased any optional coverage. The optional items available on your plan are electronics_plus, exhaust_plus - they are offered, not in force, until purchased."
+        },
+        {
+          "role": "event",
+          "content": "[selection changed to P-PLUS]"
+        },
+        {
+          "role": "user",
+          "content": "What is its deductible?"
+        },
+        {
+          "role": "assistant",
+          "content": "OFFLINE_DETERMINISTIC - NOT AN LLM\n\nThe deductible for CoreDrive Plus (P-PLUS) is $100. Optional coverage: you have not purchased any optional coverage. The optional items available on your plan are electronics_plus, exhaust_plus - they are offered, not in force, until purchased."
+        }
+      ],
+      "mode": "OFFLINE_DETERMINISTIC - NOT AN LLM"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+# No third-party runtime dependencies.
+# The project runs on the Python standard library alone (Python 3.9+).
+#
+# Optional, only if you want a nicer local model server:
+#   pip install ollama
+#
+# Everything needed to run the tests, the CLI and the reviewer UI is
+# already in the standard library.

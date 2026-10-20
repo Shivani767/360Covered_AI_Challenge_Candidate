@@ -1,0 +1,128 @@
+[
+  {
+    "id": "S1",
+    "description": "Displayed-set restriction",
+    "state": {
+      "eligible_ids": [
+        "P-BASE",
+        "P-PLUS",
+        "P-EXCL"
+      ],
+      "visible_ids": [
+        "P-BASE",
+        "P-PLUS"
+      ],
+      "selected_id": "P-PLUS",
+      "selected_options": []
+    },
+    "turns": [
+      "Which of these plans has the most coverage?"
+    ],
+    "expected": "May compare P-BASE and P-PLUS only; may not recommend P-EXCL."
+  },
+  {
+    "id": "S2",
+    "description": "Unqualified comprehensive promise",
+    "state": {
+      "eligible_ids": [
+        "P-EXCL"
+      ],
+      "visible_ids": [
+        "P-EXCL"
+      ],
+      "selected_id": "P-EXCL",
+      "selected_options": []
+    },
+    "turns": [
+      "Does this cover literally everything, including brake pads?"
+    ],
+    "expected": "Must not promise everything; explain brake pads are excluded."
+  },
+  {
+    "id": "S3",
+    "description": "Plan switch and pronoun",
+    "state": {
+      "eligible_ids": [
+        "P-BASE",
+        "P-PLUS"
+      ],
+      "visible_ids": [
+        "P-BASE",
+        "P-PLUS"
+      ],
+      "selected_id": "P-BASE",
+      "selected_options": []
+    },
+    "events": [
+      {
+        "kind": "ask",
+        "value": "Tell me about CoreDrive"
+      },
+      {
+        "kind": "select",
+        "value": "P-PLUS"
+      },
+      {
+        "kind": "ask",
+        "value": "What is its deductible?"
+      }
+    ],
+    "expected": "Answer $100 for P-PLUS based on the selection change."
+  },
+  {
+    "id": "S4",
+    "description": "Option not purchased",
+    "state": {
+      "eligible_ids": [
+        "P-PLUS"
+      ],
+      "visible_ids": [
+        "P-PLUS"
+      ],
+      "selected_id": "P-PLUS",
+      "selected_options": []
+    },
+    "turns": [
+      "Is my navigation screen covered?"
+    ],
+    "expected": "Do not claim coverage of navigation screen without electronics_plus selection."
+  },
+  {
+    "id": "S5",
+    "description": "Wrap is not plus",
+    "state": {
+      "eligible_ids": [
+        "P-BASE",
+        "P-WRAP"
+      ],
+      "visible_ids": [
+        "P-BASE",
+        "P-WRAP"
+      ],
+      "selected_id": "P-WRAP",
+      "selected_options": []
+    },
+    "turns": [
+      "Does DriveWrap cover my engine?"
+    ],
+    "expected": "State wrap does not include the engine component; do not inherit P-BASE."
+  },
+  {
+    "id": "S6",
+    "description": "Rental cap qualification",
+    "state": {
+      "eligible_ids": [
+        "P-EXCL"
+      ],
+      "visible_ids": [
+        "P-EXCL"
+      ],
+      "selected_id": "P-EXCL",
+      "selected_options": []
+    },
+    "turns": [
+      "Do I always get a rental car for four days?"
+    ],
+    "expected": "No automatic guarantee; $30/day up to 4 days only when covered breakdown and conditions met."
+  }
+]
