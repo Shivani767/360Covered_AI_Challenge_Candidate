@@ -15,7 +15,12 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from conftest_helper import ROOT  # noqa: F401
 from coverage_assistant import CoverageAssistant
-from coverage_assistant.llm import OpenAICompatibleProvider, ProviderConfig
+from coverage_assistant.llm import (
+    MissingCredentialError,
+    OpenAICompatibleProvider,
+    ProviderConfig,
+    build_provider,
+)
 from coverage_assistant.prompts import PROMPT_VERSION
 
 
@@ -196,3 +201,54 @@ class LiveProviderTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProviderSelectionTest(unittest.TestCase):
+    """Live mode must pick the provider whose key is actually present."""
+
+    def setUp(self):
+        self._saved = {
+            key: os.environ.pop(key, None)
+            for key in (
+                "OPENAI_API_KEY",
+                "ANTHROPIC_API_KEY",
+                "LLM_API_KEY",
+                "LLM_PROVIDER",
+                "LLM_BASE_URL",
+            )
+        }
+
+    def tearDown(self):
+        for key, value in self._saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+    def test_anthropic_key_only_selects_anthropic(self):
+        os.environ["ANTHROPIC_API_KEY"] = "sk-ant-test"
+        self.assertEqual(build_provider("live").name, "anthropic")
+
+    def test_openai_key_only_selects_openai(self):
+        os.environ["OPENAI_API_KEY"] = "sk-test"
+        self.assertEqual(build_provider("live").name, "openai")
+
+    def test_explicit_provider_overrides_detection(self):
+        os.environ["OPENAI_API_KEY"] = "sk-test"
+        os.environ["ANTHROPIC_API_KEY"] = "sk-ant-test"
+        os.environ["LLM_PROVIDER"] = "anthropic"
+        self.assertEqual(build_provider("live").name, "anthropic")
+
+    def test_base_url_selects_openai_compatible(self):
+        os.environ["LLM_API_KEY"] = "test"
+        os.environ["LLM_BASE_URL"] = "http://127.0.0.1:11434/v1"
+        provider = build_provider("live")
+        self.assertEqual(provider.name, "openai-compatible")
+        self.assertEqual(provider.base_url, "http://127.0.0.1:11434/v1")
+
+    def test_missing_key_raises_clear_error(self):
+        with self.assertRaises(MissingCredentialError) as ctx:
+            build_provider("live")
+        message = str(ctx.exception).lower()
+        self.assertIn("api key", message)
+        self.assertIn("offline", message)

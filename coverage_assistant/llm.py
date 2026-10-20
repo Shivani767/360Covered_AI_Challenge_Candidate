@@ -180,8 +180,9 @@ class OpenAIProvider(BaseProvider):
         super().__init__(config)
         if not self.config.api_key:
             raise MissingCredentialError(
-                "No API key found. Set OPENAI_API_KEY (or LLM_API_KEY) in your "
-                "environment, or run the assistant in offline mode."
+                "No API key found. Set OPENAI_API_KEY or ANTHROPIC_API_KEY (or "
+                "LLM_API_KEY) in your environment, or run the assistant in "
+                "offline mode."
             )
 
     @property
@@ -336,7 +337,9 @@ def build_provider(mode: str = "offline", config: Optional[ProviderConfig] = Non
     if chosen in ("offline", "deterministic", "test"):
         return OfflineDeterministicProvider(config or ProviderConfig(provider="offline"))
     if chosen in ("live", "llm", "openai"):
-        cfg = config or ProviderConfig.from_env("openai")
+        # Do not force a provider here: from_env() auto-detects which key is
+        # present (OpenAI, then Anthropic) and honours LLM_PROVIDER.
+        cfg = config or ProviderConfig.from_env()
         if cfg.provider == "anthropic":
             return AnthropicProvider(cfg)
         if cfg.base_url:

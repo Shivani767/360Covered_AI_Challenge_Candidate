@@ -1,8 +1,8 @@
 # AI Coverage Assistant - Evaluation Report
 
 - Mode: **OFFLINE_DETERMINISTIC - NOT AN LLM**
-- Cases run: **76**
-- Passed: **76**
+- Cases run: **81**
+- Passed: **81**
 - Failed: **0**
 - Errors: **0**
 
@@ -49,22 +49,27 @@
 | `guardrails.GuardrailTest.universal_promise_is_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.unpurchased_option_coverage_rejected` | PASS | 0.0 |
 | `guardrails.GuardrailTest.unpurchased_option_with_hedge_allowed` | PASS | 0.0 |
-| `live_provider.LiveProviderTest.live_call_returns_model_answer` | PASS | 0.0077 |
-| `live_provider.LiveProviderTest.live_request_carries_the_fact_pack` | PASS | 0.0005 |
+| `live_provider.LiveProviderTest.live_call_returns_model_answer` | PASS | 0.008 |
+| `live_provider.LiveProviderTest.live_request_carries_the_fact_pack` | PASS | 0.0006 |
 | `live_provider.LiveProviderTest.missing_api_key_raises_clear_error` | PASS | 0.0 |
 | `live_provider.LiveProviderTest.prompt_version_is_recorded_in_the_trace` | PASS | 0.0004 |
-| `live_provider.LiveProviderTest.provider_error_is_surfaced_not_swallowed` | PASS | 0.5037 |
-| `live_provider.LiveProviderTest.spend_cap_stops_further_calls` | PASS | 0.0017 |
-| `live_provider.LiveProviderTest.unsafe_model_answer_is_caught_and_replaced` | PASS | 0.002 |
-| `multiturn.MultiTurnTest.conversation_does_not_drift_after_state_change` | PASS | 0.0007 |
-| `multiturn.MultiTurnTest.history_is_bounded` | PASS | 0.0091 |
-| `multiturn.MultiTurnTest.newly_visible_plan_can_be_discussed` | PASS | 0.0004 |
-| `multiturn.MultiTurnTest.option_purchase_is_reflected` | PASS | 0.0006 |
+| `live_provider.LiveProviderTest.provider_error_is_surfaced_not_swallowed` | PASS | 0.5032 |
+| `live_provider.LiveProviderTest.spend_cap_stops_further_calls` | PASS | 0.0019 |
+| `live_provider.LiveProviderTest.unsafe_model_answer_is_caught_and_replaced` | PASS | 0.0023 |
+| `live_provider.ProviderSelectionTest.anthropic_key_only_selects_anthropic` | PASS | 0.0003 |
+| `live_provider.ProviderSelectionTest.base_url_selects_openai_compatible` | PASS | 0.0002 |
+| `live_provider.ProviderSelectionTest.explicit_provider_overrides_detection` | PASS | 0.0001 |
+| `live_provider.ProviderSelectionTest.missing_key_raises_clear_error` | PASS | 0.0001 |
+| `live_provider.ProviderSelectionTest.openai_key_only_selects_openai` | PASS | 0.0001 |
+| `multiturn.MultiTurnTest.conversation_does_not_drift_after_state_change` | PASS | 0.0021 |
+| `multiturn.MultiTurnTest.history_is_bounded` | PASS | 0.0078 |
+| `multiturn.MultiTurnTest.newly_visible_plan_can_be_discussed` | PASS | 0.0003 |
+| `multiturn.MultiTurnTest.option_purchase_is_reflected` | PASS | 0.0005 |
 | `multiturn.MultiTurnTest.option_removal_is_reflected` | PASS | 0.0005 |
 | `multiturn.MultiTurnTest.plan_is_not_sticky_after_visibility_change` | PASS | 0.0005 |
 | `multiturn.MultiTurnTest.reset_clears_referent_memory` | PASS | 0.0005 |
 | `multiturn.MultiTurnTest.selection_change_is_reflected_on_next_turn` | PASS | 0.0005 |
-| `scenarios.ScenarioTest.all_scenarios_meet_expectation` | PASS | 0.0021 |
+| `scenarios.ScenarioTest.all_scenarios_meet_expectation` | PASS | 0.0022 |
 | `scenarios.ScenarioTraceTest.offline_mode_is_labelled_not_llm` | PASS | 0.0003 |
 | `scenarios.ScenarioTraceTest.trace_records_authorization_scope` | PASS | 0.0003 |
 | `smoke.Smoke.returns_text` | PASS | 0.0003 |
@@ -83,9 +88,9 @@
 | `state.StateNormalizationTest.missing_visible_ids_does_not_widen_to_whole_catalog` | PASS | 0.0 |
 | `state.StateNormalizationTest.unknown_option_is_dropped` | PASS | 0.0 |
 | `state.StateNormalizationTest.unknown_plan_ids_are_dropped_with_warning` | PASS | 0.0 |
-| `sweep.SweepTest.every_answer_is_non_empty` | PASS | 0.0131 |
-| `sweep.SweepTest.every_answer_mentions_no_blocked_plan_price` | PASS | 0.0193 |
-| `sweep.SweepTest.no_safety_property_is_violated_anywhere` | PASS | 0.0234 |
+| `sweep.SweepTest.every_answer_is_non_empty` | PASS | 0.0214 |
+| `sweep.SweepTest.every_answer_mentions_no_blocked_plan_price` | PASS | 0.0154 |
+| `sweep.SweepTest.no_safety_property_is_violated_anywhere` | PASS | 0.0151 |
 
 ## Example conversations
 
