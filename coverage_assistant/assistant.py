@@ -36,8 +36,10 @@ from .llm import (
     ProviderError,
     build_provider,
 )
-from .offline_render import render_answer
+from .offline_render import OFFLINE_LABEL, render_answer
 from .prompts import PROMPT_VERSION, build_messages
+
+SAFE_FALLBACK = "SAFE_FALLBACK (deterministic)"
 from .state import normalize_state, resolve_referent
 
 MAX_HISTORY_TURNS = 6
@@ -203,13 +205,13 @@ class CoverageAssistant:
             return trace
 
         trace.raw_answer = raw
-        trace.provider_calls = getattr(self.provider, "calls", 0)
 
         result = validate_answer(raw, norm, self.catalog, fact_pack)
         trace.violations = list(result.violations)
 
         if result.ok:
             trace.answer = raw
+            trace.provider_calls = getattr(self.provider, "calls", 0)
             self._record(trace, referent, norm)
             return trace
 
@@ -221,11 +223,20 @@ class CoverageAssistant:
                 trace.repaired = True
                 trace.violations = list(result.violations)
                 trace.answer = repaired
+                trace.provider_calls = getattr(self.provider, "calls", 0)
                 self._record(trace, referent, norm)
                 return trace
 
         trace.fallback_used = True
-        trace.answer = render_answer(fact_pack)
+        body = render_answer(fact_pack)
+        # In live mode, the deterministic fallback must carry its own label
+        # so it is never mistaken for model output. Offline mode already
+        # carries OFFLINE_DETERMINISTIC from render_answer.
+        if self.is_live_llm:
+            trace.answer = f"{SAFE_FALLBACK}\n\n{body}"
+        else:
+            trace.answer = body
+        trace.provider_calls = getattr(self.provider, "calls", 0)
         self._record(trace, referent, norm)
         return trace
 

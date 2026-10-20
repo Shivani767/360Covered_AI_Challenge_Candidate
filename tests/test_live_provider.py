@@ -151,11 +151,11 @@ class LiveProviderTest(unittest.TestCase):
         self.assertIn(PROMPT_VERSION, bot.last_trace.as_dict()["prompt_version"])
 
     def test_missing_api_key_raises_clear_error(self):
-        from coverage_assistant.llm import MissingCredentialError
+        from coverage_assistant.llm import MissingCredentialError, OpenAIProvider
 
         with self.assertRaises(MissingCredentialError):
-            OpenAICompatibleProvider(
-                ProviderConfig(provider="openai-compatible", api_key=None)
+            OpenAIProvider(
+                ProviderConfig(provider="openai", api_key=None)
             )
 
     def test_spend_cap_stops_further_calls(self):

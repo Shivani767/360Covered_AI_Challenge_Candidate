@@ -157,5 +157,264 @@ class GuardrailTest(unittest.TestCase):
         self.assertIn("P-EXCL", scope["all_plan_ids"])
 
 
+class ComponentCoverageClaimTest(unittest.TestCase):
+    """A claim that a part is covered must never contradict the catalog.
+
+    DriveWrap (P-WRAP) covers the alternator, starter motor and friends, and
+    explicitly excludes the powertrain internals. An answer that tells the
+    customer their engine is covered by DriveWrap is a false coverage claim
+    and must be rejected, however it is phrased.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.catalog = Catalog.load()
+
+    def _check(self, answer, question="Does DriveWrap cover my engine?", state=None):
+        state = state or {
+            "eligible_ids": ["P-WRAP"],
+            "visible_ids": ["P-WRAP"],
+            "selected_id": "P-WRAP",
+            "selected_options": [],
+        }
+        norm = normalize_state(state, self.catalog)
+        intent = detect_intent(question)
+        referent = resolve_referent(question, norm, self.catalog)
+        fact_pack = build_fact_pack(question, norm, referent, self.catalog, intent)
+        return validate_answer(answer, norm, self.catalog, fact_pack)
+
+    # -- the original gap ---------------------------------------------
+    def test_excluded_component_claim_is_rejected(self):
+        result = self._check("Yes, the engine is covered by DriveWrap.")
+        self.assertFalse(result.ok)
+        self.assertTrue(
+            any("engine internal lubricated parts" in v for v in result.violations),
+            result.violations,
+        )
+
+    def test_excluded_component_claim_by_plan_id_is_rejected(self):
+        result = self._check("Yes, the engine is covered by P-WRAP.")
+        self.assertFalse(result.ok)
+
+    def test_exclusion_statement_is_allowed(self):
+        result = self._check(
+            "DriveWrap explicitly excludes the engine internal lubricated parts."
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    def test_negative_statement_is_allowed(self):
+        result = self._check("The engine is not covered by DriveWrap.")
+        self.assertTrue(result.ok, result.violations)
+
+    # -- aliases ------------------------------------------------------
+    def test_alias_based_excluded_claim_is_rejected(self):
+        result = self._check("Yes, your engine is covered by DriveWrap.")
+        self.assertFalse(result.ok)
+
+    def test_alias_based_negative_is_allowed(self):
+        result = self._check("Your transmission is not covered by DriveWrap.")
+        self.assertTrue(result.ok, result.violations)
+
+    def test_alias_based_covered_claim_is_allowed(self):
+        result = self._check("Yes, your alternator is covered by DriveWrap.")
+        self.assertTrue(result.ok, result.violations)
+
+    # -- mixed clauses ------------------------------------------------
+    def test_mixed_clauses_with_one_false_claim_are_rejected(self):
+        result = self._check(
+            "The engine is covered by DriveWrap, but the alternator is not covered."
+        )
+        self.assertFalse(result.ok)
+        self.assertTrue(
+            any("engine internal lubricated parts" in v for v in result.violations),
+            result.violations,
+        )
+
+    def test_mixed_clauses_with_a_true_claim_are_allowed(self):
+        result = self._check(
+            "The alternator is covered by DriveWrap, but the engine is not covered "
+            "by DriveWrap."
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    # -- plan attribution ---------------------------------------------
+    def test_claim_attributed_to_the_plan_that_covers_it_is_allowed(self):
+        result = self._check(
+            "CoreDrive covers the engine internal lubricated parts.",
+            state={
+                "eligible_ids": ["P-BASE", "P-WRAP"],
+                "visible_ids": ["P-BASE", "P-WRAP"],
+                "selected_id": "P-WRAP",
+                "selected_options": [],
+            },
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    def test_claim_attributed_to_the_wrong_plan_is_rejected(self):
+        result = self._check(
+            "DriveWrap covers the engine internal lubricated parts.",
+            state={
+                "eligible_ids": ["P-BASE", "P-WRAP"],
+                "visible_ids": ["P-BASE", "P-WRAP"],
+                "selected_id": "P-WRAP",
+                "selected_options": [],
+            },
+        )
+        self.assertFalse(result.ok)
+
+    def test_shorter_plan_name_inside_longer_name_is_not_attribution(self):
+        """'CoreDrive Plus' must not be read as 'CoreDrive'."""
+        result = self._check(
+            "CoreDrive Plus covers the engine internal lubricated parts.",
+            state={
+                "eligible_ids": ["P-PLUS"],
+                "visible_ids": ["P-PLUS"],
+                "selected_id": "P-PLUS",
+                "selected_options": [],
+            },
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    # -- options ------------------------------------------------------
+    def test_option_covered_component_is_not_a_violation(self):
+        result = self._check(
+            "Your factory-installed navigation screen is covered by the "
+            "electronics_plus option.",
+            question="Is my navigation screen covered?",
+            state={
+                "eligible_ids": ["P-PLUS"],
+                "visible_ids": ["P-PLUS"],
+                "selected_id": "P-PLUS",
+                "selected_options": ["electronics_plus"],
+            },
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    def test_unpurchased_option_component_claim_is_rejected(self):
+        result = self._check(
+            "Yes, your navigation screen is covered.",
+            question="Is my navigation screen covered?",
+            state={
+                "eligible_ids": ["P-PLUS"],
+                "visible_ids": ["P-PLUS"],
+                "selected_id": "P-PLUS",
+                "selected_options": [],
+            },
+        )
+        self.assertFalse(result.ok)
+
+    def test_option_excluded_component_claim_is_rejected(self):
+        result = self._check(
+            "Yes, software updates are covered by your plan.",
+            question="Does the navigation screen come with software updates?",
+            state={
+                "eligible_ids": ["P-PLUS"],
+                "visible_ids": ["P-PLUS"],
+                "selected_id": "P-PLUS",
+                "selected_options": ["electronics_plus"],
+            },
+        )
+        self.assertFalse(result.ok)
+
+    def test_list_of_covered_components_is_allowed(self):
+        """A list introduced by 'Covers' inherits the coverage assertion."""
+        result = self._check(
+            "DriveWrap covers: factory air-conditioning compressor, alternator, "
+            "starter motor, factory-installed radiator, front suspension control arms."
+        )
+        self.assertTrue(result.ok, result.violations)
+
+
+
+class MultiPlanAttributionAndMoneyTest(unittest.TestCase):
+    """Cross-plan claims and money values must be attributed to the plan named.
+
+    Regression coverage for:
+      * substring/component-boundary matches ("engineer" != "engine"),
+      * Base/Plus monetary misattribution ($139 is Plus, not Base),
+      * coordinated multi-plan claims in a single sentence.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.catalog = Catalog.load()
+
+    def _check(self, answer, question="Tell me about my plans.", state=None):
+        state = state or {
+            "eligible_ids": ["P-BASE", "P-PLUS", "P-WRAP", "P-EXCL"],
+            "visible_ids": ["P-BASE", "P-PLUS", "P-WRAP", "P-EXCL"],
+            "selected_id": "P-BASE",
+            "selected_options": [],
+        }
+        norm = normalize_state(state, self.catalog)
+        intent = detect_intent(question)
+        referent = resolve_referent(question, norm, self.catalog)
+        fact_pack = build_fact_pack(question, norm, referent, self.catalog, intent)
+        return validate_answer(answer, norm, self.catalog, fact_pack)
+
+    # -- substring / word-boundary component matches --------------------
+    def test_engineer_is_not_the_engine_component(self):
+        result = self._check(
+            "CoreDrive covers the engineer.",
+            state={
+                "eligible_ids": ["P-BASE", "P-WRAP"],
+                "visible_ids": ["P-BASE", "P-WRAP"],
+                "selected_id": "P-WRAP",
+                "selected_options": [],
+            },
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    def test_screening_is_not_the_navigation_screen(self):
+        result = self._check(
+            "CoreDrive Plus covers the screening.",
+            state={
+                "eligible_ids": ["P-PLUS"],
+                "visible_ids": ["P-PLUS"],
+                "selected_id": "P-PLUS",
+                "selected_options": [],
+            },
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    # -- Base / Plus monetary misattribution -----------------------------
+    def test_base_price_misattributed_to_plus_is_rejected(self):
+        result = self._check("CoreDrive is $139 per month.")
+        self.assertFalse(result.ok)
+        self.assertTrue(
+            any("139" in v and "CoreDrive" in v for v in result.violations),
+            result.violations,
+        )
+
+    def test_base_deductible_misattributed_is_rejected(self):
+        result = self._check("CoreDrive has a $100 deductible.")
+        self.assertFalse(result.ok)
+
+    def test_base_correct_price_and_deductible_allowed(self):
+        result = self._check("CoreDrive is $89 per month with a $200 deductible.")
+        self.assertTrue(result.ok, result.violations)
+
+    # -- coordinated multi-plan claims -----------------------------------
+    def test_multiplan_false_first_clause_is_rejected(self):
+        result = self._check(
+            "CoreDrive covers the alternator and CoreDrive Plus covers the alternator."
+        )
+        self.assertFalse(result.ok)
+        self.assertTrue(any("CoreDrive" in v for v in result.violations), result.violations)
+
+    def test_multiplan_both_true_is_allowed(self):
+        result = self._check(
+            "CoreDrive covers the engine and CoreDrive Plus covers the alternator."
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    def test_multiplan_wrap_engine_excluded_is_rejected(self):
+        result = self._check(
+            "DriveWrap covers the engine and CoreDrive Plus covers the alternator."
+        )
+        self.assertFalse(result.ok)
+        self.assertTrue(any("DriveWrap" in v for v in result.violations), result.violations)
+
+
 if __name__ == "__main__":
     unittest.main()

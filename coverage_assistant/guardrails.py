@@ -15,7 +15,9 @@ output and checks it against the fact pack. It looks for:
   * prices, deductibles and benefit amounts that do not match the catalog,
   * claiming an unpurchased option is in force,
   * guaranteed benefit language (e.g. "always a rental car for 4 days"),
-  * claims-decision language ("your claim is approved").
+  * claims-decision language ("your claim is approved"),
+  * claiming that a part the plan in question excludes is covered
+    (e.g. "yes, the engine is covered by DriveWrap").
 
 A violation triggers a repair attempt, and if that still fails, the answer
 is replaced with a deterministic, catalog-derived response. The model never
@@ -28,7 +30,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from .catalog import Catalog
-from .facts import detect_universal_claim
+from .facts import COMPONENT_ALIASES, detect_universal_claim, mentioned_component_spans, mentioned_components
 from .state import NormalizedState
 
 # Guarantee-style phrases that must not be used for conditional benefits.
@@ -196,17 +198,21 @@ def _normalize_money(value: Any) -> Optional[float]:
         return None
 
 
-def _asserts_coverage(answer: str, subject: str) -> bool:
+def _asserts_coverage(answer: str, subject: str, aliases: Optional[List[str]] = None) -> bool:
     """Heuristic: does a sentence containing `subject` assert coverage?
 
     Evaluated sentence by sentence so that "the navigation screen is covered
     by the electronics_plus option, which you have not purchased" is not
     treated the same as "your navigation screen is covered".
+
+    `aliases` lets a catalog phrase be recognised by the customer's own
+    wording ("navigation screen" for "factory-installed navigation screen").
     """
+    terms = [subject] + list(aliases or [])
     for sentence in re.split(r"(?<=[.!?])\s+", answer):
-        if subject.lower() not in sentence.lower():
-            continue
         sent = sentence.lower()
+        if not any(term.lower() in sent for term in terms):
+            continue
         if any(marker in sent for marker in NEGATIVE_MARKERS):
             continue
         if any(pos in sent for pos in POSITIVE_MARKERS):
@@ -251,6 +257,272 @@ def _only_in_refusal_context(answer: str, plan_id: str, catalog: Catalog) -> boo
         if not any(marker in sent for marker in REFUSAL_MARKERS):
             return False
     return True
+
+
+def _clauses(sentence: str) -> List[str]:
+    """Split a sentence into clauses.
+
+    Commas, conjunctions and contrastive conjunctions separate a coverage
+    assertion from whatever the next clause says about the same subject, so
+    that "the engine is covered by DriveWrap, but the alternator is not
+    covered" is judged clause by clause instead of as one mixed statement.
+    Splitting on "and" also separates coordinated claims about different
+    plans ("CoreDrive covers X and CoreDrive Plus covers Y").
+    """
+    parts = re.split(r"[;:,]|\b(?:but|however|whereas|although|though|while|and)\b", sentence)
+    return [part.strip() for part in parts if part.strip()]
+
+
+def _plan_context(clause: str, allowed_plans: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Plans a clause talks about.
+
+    A plan id or name in the clause names that plan. A shorter plan name that
+    is only present because it is part of a longer one ("CoreDrive" inside
+    "CoreDrive Plus") does not count.
+    """
+    lowered = clause.lower()
+    spans: List[tuple] = []
+    for plan in allowed_plans:
+        for token in (str(plan.get("id", "")), str(plan.get("name", ""))):
+            if not token:
+                continue
+            for match in re.finditer(rf"\b{re.escape(token.lower())}\b", lowered):
+                spans.append((match.start(), match.end(), plan))
+    if not spans:
+        return []
+
+    # Drop a span that sits inside a longer span (a shorter plan name inside
+    # a longer one).
+    kept: List[tuple] = []
+    for span in spans:
+        start, end, plan = span
+        inside = any(
+            other_start <= start and end <= other_end
+            and (other_end - other_start) > (end - start)
+            for other_start, other_end, _ in spans
+        )
+        if not inside:
+            kept.append(span)
+
+    named: List[Dict[str, Any]] = []
+    for _, _, plan in kept:
+        if plan not in named:
+            named.append(plan)
+    return named
+
+
+def _component_coverage_violations(
+    answer: str,
+    fact_pack: Dict[str, Any],
+    catalog: Catalog,
+) -> List[str]:
+    """Reject answers that claim coverage for a part the plan does not cover.
+
+    The catalog is the authority here: a part that is explicitly excluded by
+    the plan in question (DriveWrap and the powertrain) or that is not in the
+    plan's covered list must never be described as covered.
+
+    Sentence-scoped and negation-aware, so that "the engine is not covered"
+    is not treated as a claim.
+    """
+    violations: List[str] = []
+    allowed_plans = list(fact_pack.get("allowed_plans", []))
+    if not allowed_plans:
+        return violations
+
+    # Coverage that comes from an option is governed by the "option purchased"
+    # check instead: an option may legitimately be named as the thing that
+    # covers a part, whether or not it has been bought.
+    option_covered = set()
+    option_excluded = set()
+    for option in fact_pack.get("option_status", []):
+        option_covered.update(option.get("covers", []))
+        option_excluded.update(option.get("excludes", []))
+
+    referent = fact_pack.get("referent_plan") or {}
+
+    # The plan most recently named anywhere in the answer. A bare list such
+    # as "Covers engine internal lubricated parts" continues the plan that
+    # was named just before it ("- CoreDrive (P-BASE): ... Covers ...").
+    last_plan: Optional[Dict[str, Any]] = None
+
+    def context_for(clause: str) -> List[Dict[str, Any]]:
+        named = _plan_context(clause, allowed_plans)
+        if named:
+            return named
+        # No plan named in the clause: fall back to the plan named most
+        # recently, then to the plan the customer is asking about, then to
+        # the only allowed plan.
+        if last_plan is not None:
+            return [last_plan]
+        if referent and referent.get("id") in {p.get("id") for p in allowed_plans}:
+            return [referent]
+        if len(allowed_plans) == 1:
+            return [allowed_plans[0]]
+        return []
+
+    for sentence in re.split(r"(?<=[.!?])\s+", answer):
+        if not sentence.strip():
+            continue
+        # A coverage assertion can be introduced once and then apply to the
+        # items of a list: "Covers engine internal lubricated parts,
+        # transmission internal lubricated parts". The assertion therefore
+        # carries over to the following clauses of the same sentence.
+        asserts_coverage = False
+        for clause in _clauses(sentence):
+            named = _plan_context(clause, allowed_plans)
+            if named:
+                last_plan = named[0]
+            sent = clause.lower()
+            if any(marker in sent for marker in NEGATIVE_MARKERS):
+                # A negation or a refusal is not a coverage assertion.
+                continue
+            if any(pos in sent for pos in POSITIVE_MARKERS):
+                asserts_coverage = True
+            if not asserts_coverage:
+                continue
+
+            spans = mentioned_component_spans(clause, catalog)
+            components = []
+            for _, _, component in spans:
+                if component not in components:
+                    components.append(component)
+            if not components:
+                continue
+
+            context = context_for(clause)
+            if not context:
+                continue
+
+            for component in components:
+                if component in option_covered:
+                    # Option coverage is checked against the purchase state.
+                    continue
+                if component in option_excluded:
+                    violations.append(
+                        f"Answer claims '{component}' is covered, but it is excluded "
+                        f"by the optional coverage on this plan."
+                    )
+                    continue
+                covered_by = [
+                    plan
+                    for plan in context
+                    if component in (plan.get("covered_components") or [])
+                ]
+                if covered_by:
+                    continue
+                excluded_by = [
+                    plan
+                    for plan in context
+                    if component in (plan.get("explicitly_excluded_components") or [])
+                    or component in (plan.get("exclusions") or [])
+                ]
+                if excluded_by:
+                    names = ", ".join(
+                        str(plan.get("name", plan.get("id"))) for plan in excluded_by
+                    )
+                    violations.append(
+                        f"Answer claims '{component}' is covered, but {names} "
+                        f"explicitly excludes it."
+                    )
+                    continue
+                # An exclusionary-style plan has no component list, so absence
+                # proves nothing. For a plan with an explicit list, absence
+                # means the part is not covered by it.
+                explicit_plans = [
+                    plan
+                    for plan in context
+                    if plan.get("coverage_style") != "broad_exclusions"
+                ]
+                if explicit_plans:
+                    names = ", ".join(
+                        str(plan.get("name", plan.get("id"))) for plan in explicit_plans
+                    )
+                    violations.append(
+                        f"Answer claims '{component}' is covered, but it is not in "
+                        f"the covered list of {names}."
+                    )
+    return violations
+
+
+def _monetary_violations(
+    answer: str,
+    fact_pack: Dict[str, Any],
+    catalog: Catalog,
+) -> List[str]:
+    """Validate each money amount against the plan it is attributed to.
+
+    A fabricated amount is rejected everywhere. An amount that is valid for
+    *some* allowed plan is still rejected when the clause that contains it
+    attributes it to a different plan (for example "$139" for CoreDrive,
+    whose price is $89). Benefit amounts (rental cap, ...) are plan-free
+    and always acceptable.
+    """
+    violations: List[str] = []
+    allowed_plans = list(fact_pack.get("allowed_plans", []))
+    if not allowed_plans:
+        return violations
+
+    plan_amounts: Dict[str, set] = {}
+    for plan in allowed_plans:
+        amounts: set = set()
+        for key in ("monthly_price", "deductible"):
+            v = _normalize_money(plan.get(key))
+            if v is not None:
+                amounts.add(v)
+        plan_amounts[str(plan.get("id"))] = amounts
+
+    benefit_amounts: set = set()
+    for value in (fact_pack.get("benefits") or {}).values():
+        for key, amount in value.items():
+            if isinstance(amount, (int, float)) and not isinstance(amount, bool):
+                benefit_amounts.add(float(amount))
+
+    referent = fact_pack.get("referent_plan") or {}
+    last_plan: Optional[Dict[str, Any]] = None
+
+    def context_for(clause: str) -> List[Dict[str, Any]]:
+        named = _plan_context(clause, allowed_plans)
+        if named:
+            return named
+        if last_plan is not None:
+            return [last_plan]
+        if referent and referent.get("id") in {p.get("id") for p in allowed_plans}:
+            return [referent]
+        if len(allowed_plans) == 1:
+            return [allowed_plans[0]]
+        return []
+
+    for sentence in re.split(r"(?<=[.!?])\s+", answer):
+        if not sentence.strip():
+            continue
+        for clause in _clauses(sentence):
+            named = _plan_context(clause, allowed_plans)
+            if named:
+                last_plan = named[0]
+            sent = clause.lower()
+            if any(marker in sent for marker in NEGATIVE_MARKERS):
+                # "does not cost $139" is a true disclaimer, not a misquote.
+                continue
+            context = context_for(clause)
+            if not context:
+                continue
+            amounts = _money_values(clause)
+            if not amounts:
+                continue
+            allowed: set = set()
+            for plan in context:
+                allowed |= plan_amounts.get(str(plan.get("id")), set())
+            allowed |= benefit_amounts
+            for amount in amounts:
+                if amount not in allowed:
+                    names = ", ".join(
+                        str(p.get("name", p.get("id"))) for p in context
+                    )
+                    violations.append(
+                        f"Amount ${amount:g} does not match {names}."
+                    )
+    return violations
 
 
 def validate_answer(
@@ -321,19 +593,34 @@ def validate_answer(
         elif amount not in allowed_amounts:
             violations.append(f"Amount ${amount:g} does not match the catalog.")
 
+    # 4b. money values must match the plan they are attributed to.
+    violations.extend(_monetary_violations(answer, fact_pack, catalog))
+
     # 5. option coverage without purchase
-    purchased = set(fact_pack.get("purchased_options", []))
+    #
+    # The part may be named with the customer's own words ("your navigation
+    # screen"), so the match is done through the alias table rather than on
+    # the catalog phrase alone.
     for option in fact_pack.get("option_status", []):
         if option["purchased"]:
             continue
         for covered in option["covers"]:
-            if covered.lower() in lowered:
-                if _asserts_coverage(answer, covered):
-                    violations.append(
-                        f"Answer implies '{covered}' is covered without purchased option "
-                        f"'{option['id']}'."
-                    )
-                break
+            aliases = [
+                alias
+                for alias, component in COMPONENT_ALIASES.items()
+                if component == covered
+            ]
+            terms = [covered] + aliases
+            if not any(
+                re.search(rf"\b{re.escape(term.lower())}\b", lowered) for term in terms
+            ):
+                continue
+            if _asserts_coverage(answer, covered, aliases):
+                violations.append(
+                    f"Answer implies '{covered}' is covered without purchased option "
+                    f"'{option['id']}'."
+                )
+            break
 
     # 6. deductible correctness for the plan in question
     referent = fact_pack.get("referent_plan")
@@ -345,5 +632,8 @@ def validate_answer(
                 violations.append(
                     f"Deductible stated does not match catalog value ${deductible:g}."
                 )
+
+    # 7. the answer must not claim coverage for a part the plan excludes
+    violations.extend(_component_coverage_violations(answer, fact_pack, catalog))
 
     return GuardrailResult(ok=not violations, violations=violations, answer=answer)

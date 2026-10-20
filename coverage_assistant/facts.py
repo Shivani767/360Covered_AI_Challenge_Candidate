@@ -11,6 +11,7 @@ question rather than guessing.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -190,50 +191,116 @@ COMPONENT_ALIASES: Dict[str, str] = {
 }
 
 
-def _component_mentions(question: str, catalog: Catalog) -> List[str]:
-    """Catalog component phrases mentioned in the question.
+def component_vocabulary(catalog: Catalog) -> List[str]:
+    """Every catalog component phrase the assistant is allowed to recognise.
 
-    Matches the full catalog phrase first, then short aliases, so that
-    "does it cover my engine" resolves to the catalog's
-    "engine internal lubricated parts".
+    Covers covered components, explicitly excluded components, named
+    exclusions and option-level items, so that a customer's word for a part
+    always maps onto catalog wording.
     """
-    lowered = question.lower()
-    hits: List[str] = []
-
     known: List[str] = []
+
+    def add(item: str) -> None:
+        if item not in known:
+            known.append(item)
+
     for plan_id in catalog.plan_ids():
         for component in catalog.components(plan_id)["items"]:
-            if component not in known:
-                known.append(component)
+            add(component)
         for component in catalog.explicitly_excluded_components(plan_id):
-            if component not in known:
-                known.append(component)
+            add(component)
     # Named exclusions are part of the vocabulary as well: a customer asks
     # about "brake pads" precisely because they want to know if they are
     # excluded.
     for plan_id in catalog.plan_ids():
         for exclusion in catalog.exclusions(plan_id):
-            if exclusion not in known:
-                known.append(exclusion)
+            add(exclusion)
     # Option-level items (navigation screen, catalytic converter, ...) are
     # part of the vocabulary too, even though they sit under options.
     for option in catalog.options.values():
         for covered in option.get("covers", []):
-            if covered not in known:
-                known.append(covered)
+            add(covered)
         for excluded in option.get("excludes", []):
-            if excluded not in known:
-                known.append(excluded)
+            add(excluded)
+    return known
+
+
+def _contains_term(lowered: str, term: str) -> bool:
+    """True when `term` occurs in `lowered` as a whole word or phrase.
+
+    Plain substring matching is wrong for this vocabulary: the alias
+    "engine" would otherwise match "engineer", and "screen" would match
+    "screening". Requiring a non-word character on both sides keeps
+    "engine" from matching "engineer" while still matching
+    "the engine is covered" and "engine,".
+    """
+    if not term:
+        return False
+    pattern = rf"(?<!\w){re.escape(term.lower())}(?!\w)"
+    return re.search(pattern, lowered) is not None
+
+
+def mentioned_component_spans(
+    text: str, catalog: Catalog
+) -> List[tuple]:
+    """Positions of catalog component mentions in a text.
+
+    Returns a list of ``(start, end, component)`` tuples. Longer phrases win
+    over shorter ones, and overlapping mentions are resolved so that a
+    single span of text maps to a single component.
+    """
+    lowered = (text or "").lower()
+    known = component_vocabulary(catalog)
+    candidates: List[tuple] = []
 
     for component in known:
-        if component.lower() in lowered and component not in hits:
-            hits.append(component)
+        for match in re.finditer(
+            rf"(?<!\w){re.escape(component.lower())}(?!\w)", lowered
+        ):
+            candidates.append((match.start(), match.end(), component))
 
     for alias, component in COMPONENT_ALIASES.items():
-        if alias in lowered and component in known and component not in hits:
-            hits.append(component)
+        if component not in known:
+            continue
+        for match in re.finditer(rf"(?<!\w){re.escape(alias.lower())}(?!\w)", lowered):
+            candidates.append((match.start(), match.end(), component))
 
-    return hits
+    # Longest match wins; an equal-length match at the same position is
+    # resolved by keeping the first one seen.
+    candidates.sort(key=lambda span: (-(span[1] - span[0]), span[0]))
+    selected: List[tuple] = []
+    for span in candidates:
+        start, end, _ = span
+        if any(start < other_end and other_start < end for other_start, other_end, _ in selected):
+            continue
+        selected.append(span)
+    selected.sort(key=lambda span: span[0])
+    return selected
+
+
+def mentioned_components(text: str, catalog: Catalog) -> List[str]:
+    """Catalog component phrases mentioned in a piece of text.
+
+    Matches the full catalog phrase first, then short aliases, so that
+    "does it cover my engine" resolves to the catalog's
+    "engine internal lubricated parts". Used both for the customer's
+    question and for the model's answer, so that the validator can tell
+    which part an answer is talking about.
+
+    Matching is word-boundary aware. A bare substring test would let
+    "engine" match "engineer" and "screen" match "screening", which
+    would make the validator judge a claim about the wrong part.
+    """
+    seen: List[str] = []
+    for _, _, component in mentioned_component_spans(text, catalog):
+        if component not in seen:
+            seen.append(component)
+    return seen
+
+
+def _component_mentions(question: str, catalog: Catalog) -> List[str]:
+    """Catalog component phrases mentioned in the question."""
+    return mentioned_components(question, catalog)
 
 
 def build_fact_pack(

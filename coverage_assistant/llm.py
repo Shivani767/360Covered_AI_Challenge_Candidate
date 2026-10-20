@@ -208,8 +208,11 @@ class OpenAIProvider(BaseProvider):
         )
         self.calls += 1
         try:
-            return data["choices"][0]["message"]["content"].strip()
-        except (KeyError, IndexError, TypeError) as exc:
+            content = data["choices"][0]["message"]["content"]
+            if content is None:
+                raise ProviderError("Provider returned empty content (content is None)")
+            return content.strip()
+        except (KeyError, IndexError, TypeError, AttributeError) as exc:
             raise ProviderError(f"Unexpected response shape from provider: {data}") from exc
 
 
@@ -268,9 +271,18 @@ class OpenAICompatibleProvider(OpenAIProvider):
 
     Enabled by setting ``LLM_BASE_URL``. The default local example is
     ``http://127.0.0.1:11434/v1``.
+
+    Unlike OpenAIProvider, this adapter does not require an API key: local
+    servers such as Ollama accept any bearer token (or none). The key check
+    from OpenAIProvider is therefore skipped here.
     """
 
     name = "openai-compatible"
+
+    def __init__(self, config=None):
+        # Skip OpenAIProvider.__init__ credential check; local compatible
+        # servers do not require an API key. Initialise the base directly.
+        BaseProvider.__init__(self, config)
 
 
 class OfflineDeterministicProvider(BaseProvider):

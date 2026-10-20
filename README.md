@@ -45,26 +45,32 @@ That is the whole setup. `python --version` should print 3.9 or higher.
 python scripts/run_eval.py && python review_ui.py
 ```
 
-## 2. The two reviewer modes
+## 2. The three reviewer modes
 
-The brief requires two modes, and they must not be confused with each other.
+The assistant supports three execution modes. They must not be confused with
+each other.
 
-| Mode | Command | Model used | Credentials |
+| Mode | `ASSISTANT_MODE` | Model used | Credentials |
 | --- | --- | --- | --- |
-| **(a) Offline / deterministic** | `python review_ui.py` | **None.** A rule-based renderer | **None** |
-| **(b) Live LLM** | `ASSISTANT_MODE=live python review_ui.py` | A real LLM API call | Reviewer's own key |
+| **(a) Offline / deterministic** | `offline` (default) | **None.** A rule-based renderer | **None** |
+| **(b) Live - OpenAI** | `live` | `gpt-4o-mini` (or `LLM_MODEL`) | `OPENAI_API_KEY` (your own) |
+| **(c) Live - Local Llama via Ollama** | `live` | Installed Ollama model (`LLM_MODEL`) | **None** |
 
-Every offline answer is prefixed with `OFFLINE_DETERMINISTIC - NOT AN LLM`,
-and the UI shows a yellow **OFFLINE_DETERMINISTIC** badge. In live mode the
-badge turns green and reads `LIVE LLM (openai: gpt-4o-mini)`. A canned
-answer is never presented as if a model had produced it - this is asserted
-in the test suite (`tests/test_adversarial.py`).
+### Provider selection (`LLM_PROVIDER`)
+
+| `LLM_PROVIDER` | `LLM_BASE_URL` | `OPENAI_API_KEY` | Result |
+| --- | --- | --- | --- |
+| *(unset)* | *(unset)* | set | OpenAI (`api.openai.com`) |
+| *(unset)* | `http://localhost:11434/v1` | *(unset)* | Ollama (OpenAI-compatible) |
+| `openai-compatible` | `http://localhost:11434/v1` | *(unset)* | Ollama (OpenAI-compatible) |
+| `openai` | *(unset)* | set | OpenAI |
+| `anthropic` | *(unset)* | `ANTHROPIC_API_KEY` | Anthropic |
 
 ### (a) Offline mode - credential-free
 
 ```bash
 python review_ui.py                       # open http://127.0.0.1:8765
-python -m unittest discover -s tests -v   # 69 cases, all offline
+python -m unittest discover -s tests -v   # 127 cases, all offline
 ```
 
 The offline adapter is a deterministic renderer over the same fact pack the
@@ -73,24 +79,43 @@ behaviour. **It is not a language model and earns no credit for live model
 behaviour.** Its role in this submission is to act as a test oracle and as
 the safe fallback when a live model's output fails validation.
 
-### (b) Live mode - a real LLM call
+### (b) Live mode - OpenAI
 
 Set **your own** key, then run with `ASSISTANT_MODE=live`:
 
 ```bash
-# OpenAI
 export OPENAI_API_KEY=sk-...
-ASSISTANT_MODE=live python review_ui.py
-
-# Anthropic
-export ANTHROPIC_API_KEY=sk-ant-...
-ASSISTANT_MODE=live python review_ui.py
-
-# Any OpenAI-compatible server (Ollama, vLLM, LM Studio, a gateway)
-export LLM_BASE_URL=http://127.0.0.1:11434/v1
-export LLM_API_KEY=whatever-your-server-wants
+export LLM_MODEL=gpt-4o-mini   # optional, defaults to gpt-4o-mini
 ASSISTANT_MODE=live python review_ui.py
 ```
+
+### (c) Live mode - Local Llama via Ollama
+
+Ollama is a locally installed model server. No API key is required and no
+per-request charges apply. The assistant reaches Ollama through its
+OpenAI-compatible endpoint at `http://localhost:11434/v1`.
+
+Prerequisites: Ollama installed and running, with at least one model
+pulled (check with `ollama list`).
+
+```bash
+# 1. Confirm Ollama is running and see installed models
+ollama list
+
+# 2. Run the assistant with ASSISTANT_MODE=live, pointing at Ollama
+export ASSISTANT_MODE=live
+export LLM_PROVIDER=openai-compatible
+export LLM_BASE_URL=http://localhost:11434/v1
+export LLM_MODEL=<exact-model-name-from-ollama-list>   # e.g. qwen2.5:3b
+
+python review_ui.py
+# or from the command line:
+python -m coverage_assistant.cli --mode live -q "What does DriveWrap cover?" --show-trace
+```
+
+No `OPENAI_API_KEY` is needed for Ollama mode. If Ollama is stopped, the
+requested model is missing, or the endpoint is unreachable, the assistant
+reports the error clearly and does not fabricate an answer.
 
 The same works from the command line:
 
@@ -99,9 +124,9 @@ ASSISTANT_MODE=live python -m coverage_assistant.cli \
   -q "What does DriveWrap cover?" --show-trace
 ```
 
-If no key is set, live mode fails with an explicit message
-(`No API key found. Set OPENAI_API_KEY ...`) and **no answer is fabricated**.
-The UI shows the error rather than a plausible-looking reply.
+If no key is set (OpenAI mode) and no Ollama endpoint is reachable, live
+mode fails with an explicit message and **no answer is fabricated**. The UI
+shows the error rather than a plausible-looking reply.
 
 ### Expected usage and spend caps
 
@@ -121,6 +146,16 @@ Two hard caps are enforced in code, not by convention:
 When the call cap is reached the assistant raises `SpendCapError` and says
 so; it does not silently keep spending. Restarting the UI resets the
 budget.
+
+### Deterministic fallback (`SAFE_FALLBACK`)
+
+When a live model's answer fails validation, the assistant attempts exactly
+one repair. If repair also fails, it falls back to a deterministic,
+catalog-grounded answer. In live mode this fallback answer is prefixed with
+`SAFE_FALLBACK (deterministic)` so it is never mistaken for model output.
+Offline mode answers carry the `OFFLINE_DETERMINISTIC - NOT AN LLM` label
+instead. In every case the assistant never claims that a template was
+written by a model.
 
 ## 3. What the reviewer can do in the UI
 
@@ -165,8 +200,10 @@ The allowed plan set is computed in code as `eligible_ids ∩ visible_ids`.
 Only those plans enter the fact pack, so the model cannot describe an
 invisible plan. After generation, the answer is checked for universal
 coverage promises, guarantee and claims-decision language, unauthorised
-plan references, dollar amounts that do not match the catalogue, and
-coverage claims for options that were offered but not purchased. A failing
+plan references, dollar amounts that do not match the catalogue, coverage
+claims for options that were offered but not purchased, and coverage claims
+for a part the plan in question explicitly excludes (for example, claiming
+that DriveWrap covers the engine). A failing
 answer gets one repair attempt with the specific violations listed, and
 then a deterministic catalogue-derived fallback. The model never has the
 last word.
@@ -177,7 +214,7 @@ last word.
 python -m unittest discover -s tests -v
 ```
 
-69 cases, all offline and all passing on a clean machine:
+127 cases, all offline and all passing on a clean machine:
 
 | File | Covers |
 | --- | --- |
@@ -189,6 +226,7 @@ python -m unittest discover -s tests -v
 | `tests/test_multiturn.py` | Selection changes, visibility changes, option purchase/removal, bounded history |
 | `tests/test_live_provider.py` | The live HTTP path against a local mock server: real request, fact pack on the wire, unsafe answer caught, spend cap, error surfacing |
 | `tests/test_smoke.py` | The supplied smoke test, unchanged |
+| `tests/test_sweep.py` | Property-style sweep over many questions x many states |
 
 `tests/test_live_provider.py` starts a local mock HTTP server on a random
 port. It needs no key and no network, and it exercises the same code path
@@ -244,12 +282,39 @@ template was written by a model.
 
 ## 10. Known limitations
 
-* **No real provider round-trip was performed.** The candidate environment
-  had no API key. The live path was verified end to end against a local
-  mock HTTP server that speaks the OpenAI chat-completions shape
-  (`tests/test_live_provider.py`), and the Anthropic request shape is
-  implemented but unverified against a live endpoint. This is flagged here
-  rather than hidden, as the brief requires.
+* **Provider verification.** The live path was verified end to end against
+  a local mock HTTP server (`tests/test_live_provider.py`, `tests/test_provider_modes.py`)
+  and against a real local Ollama server running `qwen2.5:3b`
+  (`http://localhost:11434/v1`). OpenAI was not called with a real API key
+  in this environment; the OpenAI request shape is implemented and
+  mock-tested but no live OpenAI round-trip was performed. This is flagged
+  here rather than hidden, as the brief requires.
+* **Offline mode cannot demonstrate model behaviour.** It demonstrates
+  authorization, grounding and guardrails only.
+* **Intent detection is keyword-based.** It is used to choose a response
+  shape and to feed the validator, not to understand the question. An
+  unrecognised question falls back to a general description of the plan in
+  question.
+* **The guardrails are conservative.** They can reject a correct answer
+  (for example, an unusual phrasing of a valid deductible). This is a
+  deliberate trade: a false refusal is recoverable, an unauthorized
+  disclosure is not.
+* **The catalogue is synthetic.** Nothing here authorises a real claim
+  decision, and the `data/plans.json` disclaimer applies.
+* **Out of scope**, per the brief: no web app, database, VIN decoder,
+  checkout, authentication or deployment.
+
+### Provider trade-offs
+
+No claim is made that one provider is more accurate or faster than another;
+no measurements support such a claim.
+
+| Provider | Advantages | Considerations |
+| --- | --- | --- |
+| **OpenAI** | Managed API, straightforward reviewer testing with a personal key | Per-request API charges; depends on network and provider availability |
+| **Local Llama via Ollama** | No per-request API charges; supports offline/local development | Consumes local compute resources; quality and latency depend on the installed model and hardware |
+| **Offline deterministic** | Predictable baseline behaviour; credential-free; useful for testing | Not equivalent to a live LLM; cannot demonstrate model behaviour |
+
 * **Offline mode cannot demonstrate model behaviour.** It demonstrates
   authorization, grounding and guardrails only.
 * **Intent detection is keyword-based.** It is used to choose a response
@@ -278,5 +343,3 @@ template was written by a model.
 To accept the invitation, `darkside720` should open
 <https://github.com/Shivani767/360Covered_AI_Challenge_Candidate/invitations>
 and accept, then clone with their own GitHub credentials.
-
-
