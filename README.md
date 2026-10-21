@@ -554,7 +554,7 @@ no measurements support such a claim.
 | | |
 | --- | --- |
 | Repository | `https://github.com/Shivani767/360Covered_AI_Challenge_Candidate` (private) |
-| Collaborator | `darkside720` (read / pull access, invitation pending acceptance) |
+| Collaborator | `darkside720` (invitation sent and pending acceptance) |
 | Branch | `master` |
 | Runtime dependencies | none (Python standard library only) |
 | Python version | 3.9 or newer |
