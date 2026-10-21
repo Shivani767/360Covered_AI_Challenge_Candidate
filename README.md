@@ -423,6 +423,13 @@ five that mattered most:
    It now renders a catalog-derived answer, explicitly labelled as not an
    LLM.
 
+
+## 7. Engineering Priorities and Scope
+
+* **Heuristic guardrails** – Eight guardrail checks (universal promises, guarantee/claims language, dollar-amount mismatches, unauthorized plan references, un purchased options, excluded-part claims, prompt-injection safety, and coverage-claim validation) protect the delivered answer, but they are rule-based, not model‑judged. Some edge‑case harms may slip through.
+* **Nondeterministic LLM output** – The provider call is the only source of non‑determinism. The assistant always validates through `validate_answer`, repairs once, and falls back to a catalog‑derived deterministic template. Live‑mode answers depend on the specific model and its temperature/token settings.
+* **Unverified live API path** – Running the assistant in ``ASSISTANT_MODE=live`` requires an API key (OpenAI or Anthropic) and network access. The evaluation suite runs entirely offline; live‑mode behavior with a real model has not been verified in this environment and is outside the test suite's scope.
+
 ## 7. Safety model in one paragraph
 
 The allowed plan set is computed in code as `eligible_ids ∩ visible_ids`.
@@ -436,6 +443,11 @@ that DriveWrap covers the engine). A failing
 answer gets one repair attempt with the specific violations listed, and
 then a deterministic catalogue-derived fallback. The model never has the
 last word.
+## 7. Engineering Priorities and Scope
+
+* **Heuristic guardrails** – Eight guardrail checks (universal promises, guarantee/claims language, dollar-amount mismatches, unauthorized plan references, un purchased options, excluded-part claims, prompt-injection safety, and coverage-claim validation) protect the delivered answer, but they are rule-based, not model‑judged. Some edge‑case harms may slip through.
+* **Nondeterministic LLM output** – The provider call is the only source of non‑determinism. The assistant always validates through `validate_answer`, repairs once, and falls back to a catalog‑derived deterministic template. Live‑mode answers depend on the specific model and its temperature/token settings.
+* **Unverified live API path** – Running the assistant in ``ASSISTANT_MODE=live`` requires an API key (OpenAI or Anthropic) and network access. The evaluation suite runs entirely offline; live‑mode behavior with a real model has not been verified in this environment and is outside the test suite's scope.
 
 ## 8. Test suite
 

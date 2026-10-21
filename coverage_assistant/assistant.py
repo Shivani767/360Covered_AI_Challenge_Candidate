@@ -202,6 +202,7 @@ class CoverageAssistant:
             raw = self.provider.complete(messages)
         except MissingCredentialError as exc:
             trace.error = str(exc)
+            trace.final_violations = ["provider error: no model-written answer was produced"]
             trace.answer = (
                 "I could not reach a language model because no API credentials are "
                 f"configured ({exc}). No answer has been generated."
@@ -210,6 +211,16 @@ class CoverageAssistant:
             return trace
         except ProviderError as exc:
             trace.error = str(exc)
+            trace.final_violations = ["provider error: no model-written answer was produced"]
+            trace.answer = (
+                "The language model could not be reached, so I do not have a "
+                f"model-written answer for you. Provider error: {exc}"
+            )
+            self._record(trace, referent, norm)
+            return trace
+        except Exception as exc:  # defensive: never crash the reviewer UI
+            trace.error = f"{type(exc).__name__}: {exc}"
+            trace.final_violations = ["provider error: no model-written answer was produced"]
             trace.answer = (
                 "The language model could not be reached, so I do not have a "
                 f"model-written answer for you. Provider error: {exc}"
@@ -285,7 +296,7 @@ class CoverageAssistant:
         )
         try:
             return self.provider.complete(repair_messages)
-        except ProviderError:
+        except Exception:
             return None
 
     def _record(self, trace: TurnTrace, referent: Any, norm: Any) -> None:

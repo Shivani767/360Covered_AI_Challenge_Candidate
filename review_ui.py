@@ -116,12 +116,10 @@ def build_html():
         HTML.replace("__PLANS__", json.dumps([{"id": p["id"], "name": p["name"]} for p in PLANS.values()]))
         .replace("__MODE__", json.dumps("LIVE LLM" if MODE == "live" else "OFFLINE_DETERMINISTIC - NOT AN LLM"))
         .replace("__LIVE__", "true" if MODE == "live" else "false")
-        .replace("__MODEL__", json.dumps(os.environ.get("LLM_MODEL", "")))
         .replace(
             "__MODEL__",
             json.dumps(
-                (STARTUP_ERROR or "")
-                or os.environ.get("LLM_MODEL", "")
+                (os.environ.get("LLM_MODEL", "") or "") + (" (" + (STARTUP_ERROR or "") + ")" if STARTUP_ERROR else "")
             ),
         )
     )
