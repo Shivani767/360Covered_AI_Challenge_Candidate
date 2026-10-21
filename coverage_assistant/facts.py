@@ -66,6 +66,10 @@ UNIVERSAL_GUARD = [
     "guaranteed to cover",
     "fully covers",
     "complete coverage",
+    "every part is covered",
+    "all parts are covered",
+    "every component is covered",
+    "all components are covered",
 ]
 
 

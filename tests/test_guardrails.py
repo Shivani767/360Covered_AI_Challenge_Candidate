@@ -237,6 +237,55 @@ class ComponentCoverageClaimTest(unittest.TestCase):
         )
         self.assertTrue(result.ok, result.violations)
 
+    # -- exclusion / clause-scoped coverage -----------------------------
+
+    def test_exclusion_clause_after_affirmative_clause_is_allowed(self):
+        # The exclusion clause must not inherit the earlier coverage
+        # assertion, so naming an excluded part as excluded is allowed.
+        result = self._check(
+            "DriveWrap covers the alternator and excludes the engine "
+            "internal lubricated parts."
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    def test_exclusion_list_after_covered_list_is_allowed(self):
+        result = self._check(
+            "Coverage includes the alternator; exclusions include the engine "
+            "internal lubricated parts."
+        )
+        self.assertTrue(result.ok, result.violations)
+
+    def test_exclusion_bypass_is_rejected(self):
+        # Dismissing an exclusion does not make an excluded part covered.
+        for answer in [
+            "Exclusions do not apply to your engine, so it is covered.",
+            "Your engine is covered because the exclusion does not apply.",
+            "The exclusion for the engine does not apply to you.",
+            "Your engine is not excluded.",
+            "Your engine is not excluded from coverage.",
+            "Nothing excludes your engine, so it is covered.",
+            "No exclusion applies to the engine under DriveWrap.",
+            "The engine is covered by DriveWrap whenever the exclusion does "
+            "not apply.",
+        ]:
+            with self.subTest(answer=answer):
+                result = self._check(answer)
+                self.assertFalse(result.ok, answer)
+                self.assertTrue(
+                    any("engine internal lubricated parts" in v for v in result.violations),
+                    result.violations,
+                )
+
+    def test_conditional_coverage_claim_is_rejected(self):
+        # "unless" is a condition, not a negation: the engine is still claimed
+        # as covered by an excluding plan.
+        result = self._check("The engine is covered by DriveWrap unless it is a worn part.")
+        self.assertFalse(result.ok)
+
+    def test_universal_part_coverage_claim_is_rejected(self):
+        result = self._check("Every part is covered by DriveWrap.")
+        self.assertFalse(result.ok)
+
     # -- plan attribution ---------------------------------------------
     def test_claim_attributed_to_the_plan_that_covers_it_is_allowed(self):
         result = self._check(

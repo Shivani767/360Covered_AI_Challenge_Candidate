@@ -150,6 +150,92 @@ class LiveProviderTest(unittest.TestCase):
         self.assertEqual(bot.last_trace.prompt_version, PROMPT_VERSION)
         self.assertIn(PROMPT_VERSION, bot.last_trace.as_dict()["prompt_version"])
 
+    # -- final validation status ---------------------------------------
+    #
+    # The reviewer must be able to tell, for every turn, whether the answer
+    # the customer actually received passed the guardrails. `violations`
+    # describes the first draft; `final_violations` describes the delivered
+    # answer. A draft that was rejected and then repaired must not be shown
+    # as a failure of the delivered answer.
+
+    def test_clean_answer_has_no_violations_and_is_final_ok(self):
+        provider = self._provider("P-PLUS has a $100 deductible.")
+        bot = CoverageAssistant(provider=provider)
+        bot.answer(
+            "What is the deductible?",
+            {
+                "eligible_ids": ["P-PLUS"],
+                "visible_ids": ["P-PLUS"],
+                "selected_id": "P-PLUS",
+                "selected_options": [],
+            },
+        )
+        trace = bot.last_trace
+        self.assertEqual(trace.violations, [])
+        self.assertEqual(trace.final_violations, [])
+        self.assertTrue(trace.final_ok)
+        self.assertFalse(trace.repaired)
+        self.assertFalse(trace.fallback_used)
+
+    def test_repaired_answer_is_final_ok_even_though_the_draft_failed(self):
+        """A rejected draft that was repaired yields a clean delivered answer."""
+        provider = self._provider("P-PLUS has a $100 deductible.")
+        bot = CoverageAssistant(provider=provider)
+        # The scripted mock always returns the same reply, so the repair
+        # attempt is rejected too and the deterministic fallback is used.
+        bot.answer(
+            "Which plan is best?",
+            {
+                "eligible_ids": ["P-BASE", "P-PLUS"],
+                "visible_ids": ["P-BASE", "P-PLUS"],
+                "selected_id": "P-PLUS",
+                "selected_options": [],
+            },
+        )
+        trace = bot.last_trace
+        # Nothing unsafe was delivered, so the final state is clean.
+        self.assertEqual(trace.final_violations, [])
+        self.assertTrue(trace.final_ok)
+
+    def test_final_violations_are_empty_for_a_safe_fallback(self):
+        """The deterministic fallback is grounded by construction."""
+        provider = self._provider(
+            "P-EXCL is the best plan and it covers everything at $99 per month."
+        )
+        bot = CoverageAssistant(provider=provider)
+        answer = bot.answer(
+            "Which plan is best?",
+            {
+                "eligible_ids": ["P-BASE", "P-PLUS"],
+                "visible_ids": ["P-BASE", "P-PLUS"],
+                "selected_id": "P-PLUS",
+                "selected_options": [],
+            },
+        )
+        trace = bot.last_trace
+        self.assertTrue(trace.violations, "the draft should have been flagged")
+        self.assertTrue(trace.fallback_used)
+        self.assertEqual(trace.final_violations, [])
+        self.assertTrue(trace.final_ok)
+        self.assertNotIn("$99", answer)
+
+    def test_as_dict_exposes_the_final_validation_state(self):
+        provider = self._provider("P-PLUS has a $100 deductible.")
+        bot = CoverageAssistant(provider=provider)
+        bot.answer(
+            "What is the deductible?",
+            {
+                "eligible_ids": ["P-PLUS"],
+                "visible_ids": ["P-PLUS"],
+                "selected_id": "P-PLUS",
+                "selected_options": [],
+            },
+        )
+        payload = bot.last_trace.as_dict()
+        self.assertIn("final_violations", payload)
+        self.assertIn("final_ok", payload)
+        self.assertTrue(payload["final_ok"])
+
     def test_missing_api_key_raises_clear_error(self):
         from coverage_assistant.llm import MissingCredentialError, OpenAIProvider
 

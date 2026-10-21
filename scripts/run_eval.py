@@ -191,10 +191,13 @@ def build_report(result, records, conversations, mode) -> str:
         "language model and earns no credit for live model behaviour."
     )
     lines.append(
-        "- Live mode requires a reviewer-supplied API key. The candidate had no "
-        "provider credentials, so the live path was verified against a local mock "
-        "HTTP server (see `tests/test_live_provider.py`) rather than a real "
-        "provider round-trip."
+        "- Live mode requires a reviewer-supplied API key. The live path was "
+        "verified end to end against a local mock HTTP server (see "
+        "`tests/test_live_provider.py`) and against a real local Ollama server "
+        "running `qwen2.5:3b` at `http://localhost:11434/v1`. OpenAI was not "
+        "called with a real API key, so the OpenAI request shape is "
+        "implemented and mock-tested but no live OpenAI round-trip was "
+        "performed. This is stated here rather than hidden."
     )
     lines.append(
         "- The catalog is synthetic and does not authorise any claim decision. "

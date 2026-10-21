@@ -64,6 +64,17 @@ class TurnTrace:
     error: Optional[str] = None
     provider_calls: int = 0
     prompt_version: str = PROMPT_VERSION
+    # Violations of the answer that was actually delivered to the customer.
+    # `violations` describes the *first draft* the model produced; when that
+    # draft was rejected and repaired or replaced, the delivered answer can be
+    # clean even though `violations` is non-empty. `final_violations` is empty
+    # exactly when the delivered answer passed the guardrails.
+    final_violations: List[str] = field(default_factory=list)
+
+    @property
+    def final_ok(self) -> bool:
+        """True when the answer the customer received passed validation."""
+        return not self.final_violations
 
     def as_dict(self) -> Dict[str, Any]:
         return {
@@ -74,6 +85,8 @@ class TurnTrace:
             "referent_source": self.referent_source,
             "allowed_plan_ids": list(self.allowed_plan_ids),
             "violations": list(self.violations),
+            "final_violations": list(self.final_violations),
+            "final_ok": self.final_ok,
             "repaired": self.repaired,
             "fallback_used": self.fallback_used,
             "error": self.error,
@@ -211,6 +224,7 @@ class CoverageAssistant:
 
         if result.ok:
             trace.answer = raw
+            trace.final_violations = []
             trace.provider_calls = getattr(self.provider, "calls", 0)
             self._record(trace, referent, norm)
             return trace
@@ -223,6 +237,9 @@ class CoverageAssistant:
                 trace.repaired = True
                 trace.violations = list(result.violations)
                 trace.answer = repaired
+                # The delivered answer passed the guardrails; the draft that
+                # was rejected is still recorded in `violations`.
+                trace.final_violations = []
                 trace.provider_calls = getattr(self.provider, "calls", 0)
                 self._record(trace, referent, norm)
                 return trace
@@ -236,6 +253,12 @@ class CoverageAssistant:
             trace.answer = f"{SAFE_FALLBACK}\n\n{body}"
         else:
             trace.answer = body
+        # The deterministic fallback is rendered from the fact pack, so it is
+        # grounded by construction; it is still validated so the trace states
+        # exactly what the customer received.
+        trace.final_violations = list(
+            validate_answer(trace.answer, norm, self.catalog, fact_pack).violations
+        )
         trace.provider_calls = getattr(self.provider, "calls", 0)
         self._record(trace, referent, norm)
         return trace

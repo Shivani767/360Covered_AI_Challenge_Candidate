@@ -85,7 +85,19 @@ async function ask(){var q=qEl.value.trim();if(!q)return;
     var r=await fetch('/ask',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:q,state:state})});
     var data=await r.json();
     var extra='';
-    if(data.guardrail){extra='<hr><small>[intent='+esc(data.guardrail.intent)+', referent='+esc(data.guardrail.referent_plan_id||'none')+'], allowed='+esc(JSON.stringify(data.guardrail.allowed_plan_ids))+'] <span class="badge '+(data.guardrail.ok?'ok':'fail')+'">'+(data.guardrail.ok?'PASS':'FAIL: '+esc(data.guardrail.violations.join('; ')))+'</span>';}
+    if(data.guardrail){
+      var g=data.guardrail;
+      var st=g.status||(g.ok?'PASS':'FAIL');
+      var cls=(st==='PASS'||st==='REPAIRED'||st==='FALLBACK')?'ok':'fail';
+      var detail=[];
+      if(g.rejected_draft_violations&&g.rejected_draft_violations.length){
+        detail.push('rejected draft: '+esc(g.rejected_draft_violations.join('; ')));
+      }
+      if(g.violations&&g.violations.length){detail.push('delivered answer: '+esc(g.violations.join('; ')));}
+      if(g.repaired){detail.push('repaired by a second model call');}
+      if(g.fallback_used){detail.push('deterministic fallback used');}
+      extra='<hr><small>[intent='+esc(g.intent)+', referent='+esc(g.referent_plan_id||'none')+'], allowed='+esc(JSON.stringify(g.allowed_plan_ids))+'] <span class="badge '+cls+'">'+esc(st)+'</span>'+(detail.length?'<br><small>'+detail.join('<br>')+'</small>':'');
+    }
     pending.innerHTML='You: '+esc(q)+'<br>Assistant: '+esc(data.answer!=null?data.answer:(data.error||'[empty]'))+extra;
     qEl.value='';
   }catch(err){
@@ -183,13 +195,29 @@ class Handler(BaseHTTPRequestHandler):
             trace = Handler.assistant.last_trace
             payload = {"answer": answer, "mode": Handler.assistant.mode_label}
             if trace is not None:
+                # `ok` describes the answer the customer actually received, not
+                # the first draft. A draft that was rejected and then repaired
+                # or replaced must not be shown to the reviewer as a failure
+                # of the delivered answer; the rejected draft is still listed
+                # under `rejected_draft_violations`.
+                delivered_ok = trace.final_ok
+                if delivered_ok and trace.repaired:
+                    status = "REPAIRED"
+                elif delivered_ok and trace.fallback_used:
+                    status = "FALLBACK"
+                elif delivered_ok:
+                    status = "PASS"
+                else:
+                    status = "FAIL"
                 payload["guardrail"] = {
                     "intent": trace.intent,
                     "referent_plan_id": trace.referent_plan_id,
                     "referent_source": trace.referent_source,
                     "allowed_plan_ids": trace.allowed_plan_ids,
-                    "ok": not trace.violations,
-                    "violations": trace.violations,
+                    "ok": delivered_ok,
+                    "status": status,
+                    "violations": trace.final_violations,
+                    "rejected_draft_violations": trace.violations,
                     "repaired": trace.repaired,
                     "fallback_used": trace.fallback_used,
                     "error": trace.error,

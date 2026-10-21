@@ -129,6 +129,49 @@ POSITIVE_MARKERS = [
     "includes",
 ]
 
+# Phrases that directly negate that a component is covered. Only these blank
+# out a coverage assertion: a marker such as "does not" in "the exclusion does
+# not apply" talks about the exclusion, not about the component's coverage,
+# so it must not suppress a genuine "X is covered" claim.
+DIRECT_COVERAGE_NEGATION = [
+    "not covered",
+    "isn't covered",
+    "is not covered",
+    "are not covered",
+    "not include",
+    "not included",
+    "is not included",
+    "are not included",
+    "does not cover",
+    "doesn't cover",
+    "not covered under",
+    "won't be covered",
+    "will not be covered",
+]
+
+# Phrases that state an exclusion outright. These are allowed statements and
+# break any carried-over coverage assertion within the sentence.
+EXCLUSION_STATEMENT = [
+    "excludes",
+    "is excluded",
+    "are excluded",
+    "excluded from",
+    "exclusions include",
+    "exclusion of",
+]
+
+# Phrases that try to bypass an exclusion ("the exclusion does not apply").
+# When one appears alongside a mentioned component, the answer is implicitly
+# asserting that component is covered, so it must be validated.
+EXCLUSION_BYPASS = [
+    "not excluded",
+    "no exclusion",
+    "exclusions do not apply",
+    "exclusions don't apply",
+    "nothing excludes",
+    "does not apply",
+]
+
 
 @dataclass
 class GuardrailResult:
@@ -213,7 +256,7 @@ def _asserts_coverage(answer: str, subject: str, aliases: Optional[List[str]] = 
         sent = sentence.lower()
         if not any(term.lower() in sent for term in terms):
             continue
-        if any(marker in sent for marker in NEGATIVE_MARKERS):
+        if any(marker in sent for marker in DIRECT_COVERAGE_NEGATION):
             continue
         if any(pos in sent for pos in POSITIVE_MARKERS):
             return True
@@ -367,26 +410,43 @@ def _component_coverage_violations(
         # A coverage assertion can be introduced once and then apply to the
         # items of a list: "Covers engine internal lubricated parts,
         # transmission internal lubricated parts". The assertion therefore
-        # carries over to the following clauses of the same sentence.
+        # carries over to the following clauses of the same sentence, but it
+        # is broken by a clause that negates coverage or states an exclusion.
         asserts_coverage = False
         for clause in _clauses(sentence):
             named = _plan_context(clause, allowed_plans)
             if named:
                 last_plan = named[0]
             sent = clause.lower()
-            if any(marker in sent for marker in NEGATIVE_MARKERS):
-                # A negation or a refusal is not a coverage assertion.
-                continue
-            if any(pos in sent for pos in POSITIVE_MARKERS):
-                asserts_coverage = True
-            if not asserts_coverage:
-                continue
-
             spans = mentioned_component_spans(clause, catalog)
             components = []
             for _, _, component in spans:
                 if component not in components:
                     components.append(component)
+
+            if any(marker in sent for marker in DIRECT_COVERAGE_NEGATION):
+                # "the engine is not covered" is a negated-coverage statement,
+                # not a claim, so it is allowed and it ends the assertion.
+                asserts_coverage = False
+                continue
+            if components and any(
+                marker in sent for marker in EXCLUSION_BYPASS
+            ):
+                # "exclusions do not apply to your engine, so it is covered"
+                # tries to bypass an exclusion; treat as a coverage claim.
+                # Checked before EXCLUSION_STATEMENT so that negated exclusions
+                # ("not excluded", "nothing excludes") are not mistaken for
+                # affirmative exclusion statements ("excludes", "excluded from").
+                asserts_coverage = True
+            elif any(marker in sent for marker in EXCLUSION_STATEMENT):
+                # "DriveWrap excludes the engine" states an exclusion; allowed.
+                asserts_coverage = False
+                continue
+            elif any(pos in sent for pos in POSITIVE_MARKERS):
+                asserts_coverage = True
+            if not asserts_coverage:
+                continue
+
             if not components:
                 continue
 
